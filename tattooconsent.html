@@ -404,5 +404,30 @@
   setRestricted(savedRestricted);
 </script>
 
+  <script>
+let lastURL = "";
+
+setInterval(() => {
+  const frame = document.querySelector("iframe");
+  if (!frame) return;
+
+  try {
+    const current = frame.contentWindow.location.href;
+
+    // Detect thank-you page after submit
+    if (current !== lastURL && current.includes("thankyou")) {
+      setTimeout(() => {
+        frame.src = frame.src.split("?")[0]; // reload clean form
+      }, 2000); // wait 2 seconds so client sees confirmation
+    }
+
+    lastURL = current;
+  } catch(e) {
+    // Cross-origin protection — ignore
+  }
+}, 2000);
+</script>
+
 </body>
 </html>
+
