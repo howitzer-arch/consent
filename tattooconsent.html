@@ -1,0 +1,408 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=yes" />
+<title>Consent Form</title>
+<style>
+  html, body {
+    height: 100%;
+    margin: 0;
+    background: #fff;
+    overflow: hidden;
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  }
+
+  .frame-window {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;   /* crops bottom */
+    background: #fff;
+  }
+
+  iframe {
+    width: 100%;
+    border: 0;
+    display: block;
+    transform-origin: top left;
+  }
+
+  /* Admin controls panel */
+  .controls {
+    position: fixed;
+    left: 0; right: 0; top: 0;
+    padding: 10px 12px;
+    background: rgba(255,255,255,0.94);
+    border-bottom: 1px solid rgba(0,0,0,0.12);
+    backdrop-filter: blur(10px);
+    z-index: 50;
+  }
+  .controls.hidden { display: none; }
+
+  .row { display:flex; align-items:center; gap:10px; margin: 8px 0; }
+  .row label { width: 170px; font-size: 14px; }
+  .row input[type="range"] { flex: 1; }
+  .val { width: 80px; text-align:right; font-variant-numeric: tabular-nums; }
+
+  .pill {
+    display:inline-block;
+    padding: 2px 8px;
+    border: 1px solid rgba(0,0,0,0.15);
+    border-radius: 999px;
+    font-size: 12px;
+    opacity: 0.85;
+    margin-left: 6px;
+  }
+
+  .hint {
+    font-size: 12px;
+    opacity: 0.75;
+    margin-top: 6px;
+    line-height: 1.25;
+  }
+
+  .btnrow { display:flex; gap:10px; flex-wrap: wrap; }
+  .btn {
+    border: 1px solid rgba(0,0,0,0.18);
+    background: rgba(0,0,0,0.06);
+    padding: 8px 10px;
+    border-radius: 10px;
+    font-size: 14px;
+  }
+
+  /* Admin button */
+  #adminBtn {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    width: 44px;
+    height: 44px;
+    border-radius: 999px;
+    border: none;
+    background: rgba(0,0,0,0.15);
+    color: #000;
+    font-size: 20px;
+    z-index: 60;
+    backdrop-filter: blur(6px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  #adminBtn.hidden { display: none; }
+
+  /* Simple exit overlay screen */
+  #exitScreen {
+    position: fixed;
+    inset: 0;
+    background: #fff;
+    z-index: 100;
+    display: none;
+    padding: 16px;
+  }
+  #exitScreen.show { display: block; }
+  #exitScreen h1 { margin: 0 0 10px 0; font-size: 20px; }
+  #exitScreen p { margin: 0 0 14px 0; opacity: 0.8; }
+  #exitScreen .bigbtn {
+    display: inline-block;
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 1px solid rgba(0,0,0,0.18);
+    background: rgba(0,0,0,0.06);
+    font-size: 16px;
+  }
+
+  /* Optional: prevent text selection on outer UI */
+  .noselect { user-select: none; -webkit-user-select: none; }
+</style>
+</head>
+<body class="noselect">
+
+<button id="adminBtn" aria-label="Admin settings">⚙</button>
+
+<div class="controls hidden" id="controls">
+  <div class="row">
+    <label>Mode <span class="pill" id="modePill">normal</span></label>
+    <div class="hint" style="margin:0">
+      Admin panel auto-hides. Restricted mode tries to keep people stuck on this page.
+    </div>
+  </div>
+
+  <div class="row">
+    <label for="hideNormal">Hide footer (normal)</label>
+    <input id="hideNormal" type="range" min="0" max="700" step="5" />
+    <div class="val" id="hideNormalVal"></div>
+  </div>
+
+  <div class="row">
+    <label for="hideKeyboard">Hide footer (keyboard)</label>
+    <input id="hideKeyboard" type="range" min="0" max="900" step="5" />
+    <div class="val" id="hideKeyboardVal"></div>
+  </div>
+
+  <div class="row">
+    <label for="nudgePx">Nudge up/down</label>
+    <input id="nudgePx" type="range" min="-160" max="160" step="2" />
+    <div class="val" id="nudgeVal"></div>
+  </div>
+
+  <div class="row">
+    <label for="restrictedToggle">Restricted mode</label>
+    <input id="restrictedToggle" type="checkbox" />
+    <div class="hint" style="margin:0">Locks back button + tightens iframe sandbox.</div>
+  </div>
+
+  <div class="btnrow">
+    <button class="btn" id="btnLock">Lock now</button>
+    <button class="btn" id="btnUnlock">Unlock (allow back)</button>
+    <button class="btn" id="btnExit">Exit screen</button>
+    <button class="btn" id="btnReload">Reload form</button>
+  </div>
+
+  <div class="hint">
+    Secret admin recovery: tap top-right corner 5 times to show the gear.
+    Emergency exit: 3-finger long-press anywhere (~1s) to show exit screen.
+  </div>
+</div>
+
+<div class="frame-window">
+  <iframe id="formFrame"
+    src="https://form.jotform.com/howitzerpictou/consent"
+    scrolling="yes"
+    referrerpolicy="no-referrer-when-downgrade"
+    allow="clipboard-read; clipboard-write"
+  ></iframe>
+</div>
+
+<div id="exitScreen">
+  <h1>Admin exit</h1>
+  <p>Restricted mode is off here. You can close the browser/tab/app or reopen the form.</p>
+  <button class="bigbtn" id="btnReturn">Return to consent form</button>
+</div>
+
+<script>
+  const FORM_URL = "https://form.jotform.com/howitzerpictou/consent";
+
+  const frame = document.getElementById('formFrame');
+  const controls = document.getElementById('controls');
+  const modePill = document.getElementById('modePill');
+
+  const hideNormal = document.getElementById('hideNormal');
+  const hideKeyboard = document.getElementById('hideKeyboard');
+  const nudgePx = document.getElementById('nudgePx');
+
+  const hideNormalVal = document.getElementById('hideNormalVal');
+  const hideKeyboardVal = document.getElementById('hideKeyboardVal');
+  const nudgeVal = document.getElementById('nudgeVal');
+
+  const restrictedToggle = document.getElementById('restrictedToggle');
+
+  const adminBtn = document.getElementById('adminBtn');
+  const btnLock = document.getElementById('btnLock');
+  const btnUnlock = document.getElementById('btnUnlock');
+  const btnExit = document.getElementById('btnExit');
+  const btnReload = document.getElementById('btnReload');
+
+  const exitScreen = document.getElementById('exitScreen');
+  const btnReturn = document.getElementById('btnReturn');
+
+  // ----- Persistent settings -----
+  const savedHideNormal = parseInt(localStorage.getItem('hideFooterNormalPx') || '220', 10);
+  const savedHideKeyboard = parseInt(localStorage.getItem('hideFooterKeyboardPx') || '380', 10);
+  const savedNudge = parseInt(localStorage.getItem('nudgeUpPx') || '0', 10);
+  const savedRestricted = (localStorage.getItem('restrictedMode') || 'true') === 'true';
+
+  hideNormal.value = savedHideNormal;
+  hideKeyboard.value = savedHideKeyboard;
+  nudgePx.value = savedNudge;
+  restrictedToggle.checked = savedRestricted;
+
+  // ----- Keyboard detection via viewport shrink -----
+  let keyboardUp = false;
+  let baselineHeight = null;
+
+  function getViewportHeight() {
+    return (window.visualViewport && window.visualViewport.height) ? window.visualViewport.height : window.innerHeight;
+  }
+
+  function updateKeyboardState() {
+    const h = getViewportHeight();
+    if (baselineHeight === null) baselineHeight = h;
+
+    const shrink = baselineHeight - h;
+    keyboardUp = shrink > 120;
+
+    // Reset baseline on meaningful non-keyboard resizes (rotation etc.)
+    if (!keyboardUp && Math.abs(h - baselineHeight) > 80) {
+      baselineHeight = h;
+    }
+  }
+
+  // ----- Restricted mode (history lock + iframe sandbox) -----
+  let locked = false;
+
+  function setLocked(on) {
+    locked = !!on;
+    localStorage.setItem('historyLocked', locked ? 'true' : 'false');
+
+    if (locked) {
+      try { history.pushState({kiosk: true}, "", location.href); } catch (e) {}
+    }
+  }
+
+  window.addEventListener('popstate', () => {
+    if (locked) {
+      try { history.pushState({kiosk: true}, "", location.href); } catch (err) {}
+    }
+  });
+
+  function applySandbox(restrictedOn) {
+    // Restricted: block popups/new tabs and prevent the iframe from navigating the TOP page.
+    // Keep scripts + forms so Jotform still works.
+    if (restrictedOn) {
+      frame.setAttribute('sandbox', 'allow-forms allow-scripts allow-same-origin');
+    } else {
+      frame.removeAttribute('sandbox');
+    }
+  }
+
+  function setRestricted(on) {
+    const isOn = !!on;
+    restrictedToggle.checked = isOn;
+    localStorage.setItem('restrictedMode', isOn ? 'true' : 'false');
+
+    applySandbox(isOn);
+    setLocked(isOn); // restricted implies locked back button
+  }
+
+  // ----- Apply crop + save -----
+  function applyCropAndSave() {
+    updateKeyboardState();
+
+    const hidePx = keyboardUp ? parseInt(hideKeyboard.value, 10) : parseInt(hideNormal.value, 10);
+    const n = parseInt(nudgePx.value, 10);
+
+    frame.style.height = `calc(100% + ${hidePx}px)`;
+    frame.style.transform = `translateY(${n}px)`;
+
+    hideNormalVal.textContent = `${parseInt(hideNormal.value,10)}px`;
+    hideKeyboardVal.textContent = `${parseInt(hideKeyboard.value,10)}px`;
+    nudgeVal.textContent = `${n}px`;
+
+    modePill.textContent = keyboardUp ? 'keyboard' : 'normal';
+
+    localStorage.setItem('hideFooterNormalPx', parseInt(hideNormal.value,10));
+    localStorage.setItem('hideFooterKeyboardPx', parseInt(hideKeyboard.value,10));
+    localStorage.setItem('nudgeUpPx', n);
+  }
+
+  hideNormal.addEventListener('input', applyCropAndSave);
+  hideKeyboard.addEventListener('input', applyCropAndSave);
+  nudgePx.addEventListener('input', applyCropAndSave);
+
+  // ----- Admin UI behavior -----
+  let hideAdminTimer = null;
+  let hideControlsTimer = null;
+
+  function showAdminBtnFor(ms) {
+    adminBtn.classList.remove('hidden');
+    if (hideAdminTimer) clearTimeout(hideAdminTimer);
+    hideAdminTimer = setTimeout(() => adminBtn.classList.add('hidden'), ms);
+  }
+
+  function showControlsFor(ms) {
+    controls.classList.remove('hidden');
+    adminBtn.classList.add('hidden');
+
+    if (hideControlsTimer) clearTimeout(hideControlsTimer);
+    hideControlsTimer = setTimeout(() => {
+      controls.classList.add('hidden');
+      showAdminBtnFor(3000);
+    }, ms);
+  }
+
+  adminBtn.addEventListener('click', () => showControlsFor(10000)); // 10 seconds visible
+  showAdminBtnFor(3500); // on load: show gear briefly
+
+  // Secret fallback: tap top-right corner 5 times -> show admin button for 6 seconds
+  let cornerTaps = 0;
+  let cornerTapTimer = null;
+
+  function registerCornerTap(x, y) {
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    const inTopRight = (x > w * 0.80) && (y < h * 0.25);
+    if (!inTopRight) return;
+
+    cornerTaps += 1;
+    if (cornerTapTimer) clearTimeout(cornerTapTimer);
+    cornerTapTimer = setTimeout(() => { cornerTaps = 0; }, 1200);
+
+    if (cornerTaps >= 5) {
+      cornerTaps = 0;
+      showAdminBtnFor(6000);
+    }
+  }
+
+  document.addEventListener('touchstart', (e) => {
+    if (!e.touches || !e.touches[0]) return;
+    registerCornerTap(e.touches[0].clientX, e.touches[0].clientY);
+  }, {passive:true});
+
+  document.addEventListener('mousedown', (e) => registerCornerTap(e.clientX, e.clientY));
+
+  // Emergency exit: 3-finger long-press (~1s) unlocks + shows exit screen
+  let emergencyTimer = null;
+
+  document.addEventListener('touchstart', (e) => {
+    if (e.touches && e.touches.length >= 3) {
+      emergencyTimer = setTimeout(() => {
+        setRestricted(false);
+        controls.classList.add('hidden');
+        adminBtn.classList.add('hidden');
+        exitScreen.classList.add('show');
+      }, 900);
+    }
+  }, {passive:true});
+
+  document.addEventListener('touchend', () => {
+    if (emergencyTimer) clearTimeout(emergencyTimer);
+    emergencyTimer = null;
+  }, {passive:true});
+
+  // ----- Restricted toggle + lock/unlock buttons -----
+  restrictedToggle.addEventListener('change', () => setRestricted(restrictedToggle.checked));
+
+  btnLock.addEventListener('click', () => setRestricted(true));
+  btnUnlock.addEventListener('click', () => setRestricted(false));
+
+  btnReload.addEventListener('click', () => {
+    frame.src = FORM_URL + (FORM_URL.includes('?') ? '&' : '?') + 'r=' + Date.now();
+    applyCropAndSave();
+  });
+
+  btnExit.addEventListener('click', () => {
+    setRestricted(false);
+    controls.classList.add('hidden');
+    adminBtn.classList.add('hidden');
+    exitScreen.classList.add('show');
+  });
+
+  btnReturn.addEventListener('click', () => {
+    exitScreen.classList.remove('show');
+    showAdminBtnFor(6000);
+  });
+
+  // Watch viewport changes
+  window.addEventListener('resize', applyCropAndSave);
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', applyCropAndSave);
+    window.visualViewport.addEventListener('scroll', applyCropAndSave);
+  }
+
+  // Initial apply
+  applyCropAndSave();
+  setRestricted(savedRestricted);
+</script>
+
+</body>
+</html>
