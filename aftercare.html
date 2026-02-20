@@ -1,76 +1,419 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Aftercare - Howitzer Tattoo Studio</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tattoo Aftercare | Howitzer</title>
+  <meta name="description" content="Tattoo aftercare instructions: Adhesive Film, Wet Heal, and Dry Heal." />
 
-<style>
-body{
-  margin:0;
-  font-family:system-ui, sans-serif;
-  background:#111;
-  color:#fff;
-}
-.wrap{
-  max-width:900px;
-  margin:auto;
-  padding:20px;
-}
-h1{margin-top:0;}
-.card{
-  border:1px solid #333;
-  border-radius:14px;
-  padding:18px;
-  margin-bottom:18px;
-  background:#1a1a1a;
-}
-h2{margin-top:0;}
-ul,ol{margin-left:20px;}
-li{margin:6px 0;}
-</style>
+  <style>
+    :root{
+      --bg:#0e0f12;
+      --panel:#14161b;
+      --panel2:#101217;
+      --text:#f2f4f8;
+      --muted:rgba(242,244,248,.75);
+      --line:rgba(242,244,248,.12);
+      --accent:#c7ff5a;
+      --danger:#ff6363;
+      --shadow: 0 10px 35px rgba(0,0,0,.45);
+      --radius: 18px;
+      --max: 940px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: radial-gradient(1200px 500px at 20% -10%, rgba(199,255,90,.08), transparent 60%),
+                  radial-gradient(900px 500px at 90% 0%, rgba(99,195,255,.08), transparent 55%),
+                  var(--bg);
+      color:var(--text);
+    }
+    a{color:inherit}
+    .wrap{max-width:var(--max); margin:0 auto; padding:16px}
+    header{
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(14,15,18,.78);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--line);
+    }
+    .bar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding:12px 16px;
+      max-width: var(--max);
+      margin: 0 auto;
+    }
+    .brand{
+      display:flex; align-items:center; gap:10px;
+      min-width: 0;
+    }
+    .logo{
+      width:38px; height:38px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, rgba(199,255,90,.25), rgba(99,195,255,.18));
+      border:1px solid var(--line);
+      box-shadow: var(--shadow);
+      flex: 0 0 auto;
+    }
+    .brand h1{
+      font-size: 16px;
+      margin:0;
+      line-height: 1.1;
+      letter-spacing: .2px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .brand .sub{
+      display:block;
+      font-size:12px;
+      color: var(--muted);
+      margin-top:2px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .topbtns{
+      display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;
+    }
+    .btn{
+      text-decoration:none;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:10px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.04);
+      color: var(--text);
+      font-size: 13px;
+      line-height: 1;
+      user-select:none;
+    }
+    .btn:hover{ background: rgba(255,255,255,.07); }
+    .btn.primary{
+      border-color: rgba(199,255,90,.35);
+      background: rgba(199,255,90,.10);
+    }
+    .hero{
+      padding: 18px 0 8px;
+    }
+    .heroCard{
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .heroInner{ padding: 18px 18px 14px; }
+    .heroTitle{
+      margin:0 0 8px;
+      font-size: 24px;
+      letter-spacing: .2px;
+    }
+    .heroP{
+      margin:0 0 10px;
+      color: var(--muted);
+      line-height: 1.4;
+      font-size: 14px;
+    }
+    .pillRow{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      padding: 0 18px 16px;
+    }
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: rgba(0,0,0,.18);
+      text-decoration:none;
+      font-size: 13px;
+    }
+    .pill strong{ color: var(--accent); font-weight: 700; }
+    .grid{
+      display:grid;
+      gap: 14px;
+      grid-template-columns: 1fr;
+      padding: 10px 0 24px;
+    }
+    .card{
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .cardHead{
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,.05), transparent);
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap: 12px;
+    }
+    .cardHead h2{
+      margin:0;
+      font-size: 16px;
+      letter-spacing: .2px;
+    }
+    .tag{
+      font-size: 12px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.04);
+      color: var(--muted);
+      white-space:nowrap;
+      flex: 0 0 auto;
+    }
+    .cardBody{
+      padding: 14px 16px 16px;
+      color: var(--text);
+    }
+    .cardBody p{
+      margin: 0 0 10px;
+      color: var(--muted);
+      line-height: 1.45;
+      font-size: 14px;
+    }
+    .list{
+      margin: 0;
+      padding-left: 18px;
+    }
+    .list li{
+      margin: 7px 0;
+      line-height: 1.35;
+      color: rgba(242,244,248,.88);
+      font-size: 14px;
+    }
+    .callout{
+      margin-top: 12px;
+      padding: 12px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,99,99,.35);
+      background: rgba(255,99,99,.10);
+      color: rgba(255,240,240,.92);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+    .mini{
+      margin-top: 10px;
+      padding: 12px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(199,255,90,.30);
+      background: rgba(199,255,90,.08);
+      color: rgba(240,255,230,.92);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+    footer{
+      border-top: 1px solid var(--line);
+      padding: 18px 0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .footRow{
+      display:flex;
+      gap: 10px;
+      flex-wrap:wrap;
+      justify-content:space-between;
+      align-items:center;
+    }
+    .smallLinks a{
+      color: var(--muted);
+      text-decoration:none;
+      border-bottom:1px dotted rgba(242,244,248,.22);
+    }
+    .smallLinks a:hover{ color: var(--text); }
+
+    /* desktop */
+    @media (min-width: 860px){
+      .grid{ grid-template-columns: 1fr 1fr; }
+      .span2{ grid-column: 1 / -1; }
+    }
+
+    /* print */
+    @media print{
+      header, .topbtns, .pillRow { display:none !important; }
+      body{ background:#fff; color:#000; }
+      .card, .heroCard{ box-shadow:none; border:1px solid #ddd; }
+      .cardBody p, .list li{ color:#000; }
+      .tag{ color:#333; border-color:#ddd; }
+      a{ text-decoration:none; }
+    }
+  </style>
 </head>
 
 <body>
+<header>
+  <div class="bar">
+    <div class="brand">
+      <div class="logo" aria-hidden="true"></div>
+      <div>
+        <h1>Howitzer Tattoo Studio</h1>
+        <span class="sub">Aftercare Instructions</span>
+      </div>
+    </div>
+    <div class="topbtns">
+      <a class="btn" href="#film">Adhesive Film</a>
+      <a class="btn" href="#wet">Wet Heal</a>
+      <a class="btn" href="#dry">Dry Heal</a>
+      <a class="btn primary" href="javascript:window.print()">Print</a>
+    </div>
+  </div>
+</header>
 
-<div class="wrap">
-<h1>Tattoo Aftercare</h1>
+<main class="wrap">
+  <section class="hero">
+    <div class="heroCard">
+      <div class="heroInner">
+        <h2 class="heroTitle">Tattoo Aftercare</h2>
+        <p class="heroP">
+          Now that your tattoo is complete, it’s important to keep a solid aftercare routine. A fresh tattoo is an open wound and needs to be treated properly to avoid infection and complications.
+        </p>
+        <p class="heroP">
+          Aftercare changes as products and techniques evolve. Whichever method you choose, stick with it until the tattoo is fully healed.
+        </p>
+      </div>
+      <div class="pillRow">
+        <a class="pill" href="#film"><strong>1</strong> Adhesive Film (preferred when possible)</a>
+        <a class="pill" href="#wet"><strong>2</strong> Wet Heal (best if adhesives aren’t tolerated)</a>
+        <a class="pill" href="#dry"><strong>3</strong> Dry Heal (not preferred, sometimes necessary)</a>
+      </div>
+    </div>
+  </section>
 
-<div class="card">
-<h2>Adhesive Film</h2>
-<ul>
-<li>Keep first bandage on 3–24 hours depending on fluid.</li>
-<li>Wash with mild fragrance-free soap.</li>
-<li>Air dry or pat dry with clean towel.</li>
-<li>Apply second bandage for 3–6 days if needed.</li>
-<li>Avoid soaking, swimming, or heavy sweating.</li>
-</ul>
-</div>
+  <section class="grid">
 
-<div class="card">
-<h2>Wet Heal</h2>
-<ul>
-<li>Leave initial bandage 3–5 hours.</li>
-<li>Wash with lukewarm water + antibacterial soap.</li>
-<li>Apply very thin layer of aftercare balm.</li>
-<li>Repeat several times daily for first few days.</li>
-<li>Avoid long showers, pools, hot tubs, or ocean.</li>
-<li>Do not pick or scratch peeling skin.</li>
-</ul>
-</div>
+    <!-- Adhesive Film -->
+    <article id="film" class="card span2">
+      <div class="cardHead">
+        <h2>Adhesive Film</h2>
+        <span class="tag">Preferred when possible</span>
+      </div>
+      <div class="cardBody">
+        <p>Use transparent adhesive film to protect the tattoo from bacteria and friction while it heals.</p>
 
-<div class="card">
-<h2>Dry Heal</h2>
-<ul>
-<li>Wash gently with antibacterial soap.</li>
-<li>Pat dry — never rub.</li>
-<li>Light layer of balm 2–3 times daily.</li>
-<li>Avoid soaking or prolonged water exposure.</li>
-<li>Do not pick or scratch during healing.</li>
-</ul>
-</div>
+        <h3 style="margin:14px 0 8px; font-size:14px; color:var(--muted); letter-spacing:.2px;">Initial Application</h3>
+        <ol class="list">
+          <li>Cut and trim film to fit around the tattoo — include an extra inch around all sides. Tip: round corners for better comfort and adhesion.</li>
+          <li>Peel the white paper from the sticky side first and place gently over the tattoo.</li>
+          <li>Remove the clear top layer and smooth the bandage over the tattoo.</li>
+          <li>Keep the first bandage on for 3–24 hours depending on weeping; replace within 24 hours. Fluid buildup under the bandage is normal, but don’t leave it longer than 24 hours.</li>
+        </ol>
 
-</div>
+        <h3 style="margin:14px 0 8px; font-size:14px; color:var(--muted); letter-spacing:.2px;">Removal + Reapply 2nd Bandage</h3>
+        <ol class="list">
+          <li>To remove: pull an edge and stretch it back over itself in the direction of hair growth. Shower removal is ideal; water helps loosen adhesive and reduces trauma.</li>
+          <li>Discard used bandage. Wash tattoo with mild soap (preferably fragrance-free).</li>
+          <li>Air dry or pat dry with a clean towel.</li>
+          <li>If desired, apply a thin layer of petroleum-free moisturizer to the tattoo only. (Avoid surrounding skin if reapplying film.)</li>
+          <li>Apply the second bandage the same way as above.</li>
+        </ol>
 
+        <div class="mini">
+          <strong>Second bandage notes:</strong>
+          <ul style="margin:8px 0 0 18px; padding:0;">
+            <li>Keep the second bandage on 3–6 days (6 ideal). Remove sooner if irritated, fluid builds up, or it’s coming off.</li>
+            <li>Don’t reapply more bandages after scabbing/flaking has begun. Keep moisturized instead.</li>
+            <li>If adhesive residue remains, coconut oil or baby oil can help remove it.</li>
+          </ul>
+        </div>
+
+        <h3 style="margin:14px 0 8px; font-size:14px; color:var(--muted); letter-spacing:.2px;">Showering / Swimming / Exercise</h3>
+        <ul class="list">
+          <li>Showering is fine, but keep it short. Water and heat can weaken adhesive and raise infection risk.</li>
+          <li><span style="color:var(--danger); font-weight:700;">Avoid bathing/swimming/submerging</span> while wearing film.</li>
+          <li>Light exercise is okay; avoid excessive sweating.</li>
+        </ul>
+
+        <div class="callout">
+          <strong>Infection:</strong> If you believe your tattoo has become infected, seek medical assistance ASAP to receive corrective treatment.
+        </div>
+      </div>
+    </article>
+
+    <!-- Wet Heal -->
+    <article id="wet" class="card">
+      <div class="cardHead">
+        <h2>Wet Heal</h2>
+        <span class="tag">Sterile bandage / film</span>
+      </div>
+      <div class="cardBody">
+        <p>
+          It’s very important you follow these guidelines. A beautiful tattoo can turn into a disaster if proper aftercare isn’t followed.
+        </p>
+        <ul class="list">
+          <li>Leave the bandage on 3–5 hours to protect from airborne bacteria.</li>
+          <li>Remove bandage, wash with lukewarm water + antibacterial soap to gently clean away aftercare cream and plasma.</li>
+          <li>Do not use a face washer or anything abrasive — your hand is best.</li>
+          <li>Pat dry (do not rub). Air the area 10–15 minutes.</li>
+          <li>Apply a very thin layer of tattoo aftercare balm, then rewrap with good quality protective film.</li>
+          <li>Repeat every few hours for 3–4 days.</li>
+          <li>After wet healing (after 3–4 days): wash, pat dry, apply very light balm/cream.</li>
+          <li>Continue 2–3 times/day for 5–7 days or until healed. Days 5–10: at least 2x/day. Days 11–21: keep clean and moisturize at least daily.</li>
+          <li>Avoid long showers/baths for 2 weeks. Avoid swimming (ocean/pool), spas, saunas. Short showers under ~10 minutes are best.</li>
+          <li>Peeling/scabbing can be normal. Don’t pick or scratch. Moisturize peeling skin; leave scabs alone.</li>
+          <li>After healed: protect from UV; use minimum 30 SPF in heavy sun/heat.</li>
+        </ul>
+        <div class="callout">
+          <strong>Infection:</strong> If you believe your tattoo has become infected, seek medical assistance ASAP to receive corrective treatment.
+        </div>
+      </div>
+    </article>
+
+    <!-- Dry Heal -->
+    <article id="dry" class="card">
+      <div class="cardHead">
+        <h2>Dry Heal</h2>
+        <span class="tag">Not preferred</span>
+      </div>
+      <div class="cardBody">
+        <p>
+          This method is not the preferred method. However, for allergies or sensitivities to lotions/balms, it may be the only option. If possible, wet heal or use transparent wrap.
+        </p>
+        <ul class="list">
+          <li>After removing the bandage: wash your tattoo using lukewarm water and antibacterial soap to gently clean the area.</li>
+          <li>Do not use a face washer or anything abrasive — your hand is best.</li>
+          <li>Pat dry (do not rub) with a clean towel or paper towel.</li>
+          <li>Apply a very light layer of tattoo balm or similar tattoo cream.</li>
+          <li>Continue at least 3 times/day for 5–7 days or until healed.</li>
+          <li>Days 5–10: apply balm/cream at least 2 times/day. Days 11–21: keep clean and moisturize at least once/day.</li>
+          <li>Avoid long showers/baths for 2 weeks. Avoid soaking/swimming/spas/saunas. Short showers under ~10 minutes are best.</li>
+          <li>Peeling/scabbing can happen. Don’t pick or scratch. If peeling, apply balm/cream; if scabbing, leave it alone.</li>
+          <li>After healed: protect from UV with minimum 30 SPF during heavy sun/heat.</li>
+        </ul>
+        <div class="callout">
+          <strong>Infection:</strong> If you believe your tattoo has become infected, seek medical assistance ASAP to receive corrective treatment.
+        </div>
+      </div>
+    </article>
+
+  </section>
+
+  <footer>
+    <div class="footRow">
+      <div>Howitzer Tattoo Studio • Aftercare</div>
+      <div class="smallLinks">
+        Original pages:
+        <a href="https://howitzerpictou.wixsite.com/website/aftercare">Aftercare</a> ·
+        <a href="https://howitzerpictou.wixsite.com/website/adhesivefilm">Adhesive Film</a> ·
+        <a href="https://howitzerpictou.wixsite.com/website/wetheal">Wet Heal</a> ·
+        <a href="https://howitzerpictou.wixsite.com/website/dryheal">Dry Heal</a>
+      </div>
+    </div>
+  </footer>
+</main>
 </body>
 </html>
