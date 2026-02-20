@@ -1,0 +1,708 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Pictou Music Dashboard</title>
+  <style>
+    :root{
+      --bg:#0b0c0f;
+      --panel:#121422;
+      --panel2:rgba(0,0,0,.28);
+      --text:#eef0ff;
+      --muted:#a8acc8;
+      --line:rgba(255,255,255,.12);
+      --ring:#3b82f6;
+
+      /* fat-finger sizing */
+      --radius:26px;
+      --radius2:18px;
+      --pad:26px;
+      --gap:22px;
+
+      --btnH:128px;
+      --btnFont:34px;
+
+      --controlH:88px;
+      --controlFont:26px;
+
+      --clockMax:118px;
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      background:var(--bg);
+      color:var(--text);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      overflow:hidden;
+    }
+
+    .wrap{
+      height:100%;
+      display:grid;
+      grid-template-columns: 1fr 460px;
+      gap: var(--gap);
+      padding: var(--pad);
+    }
+
+    .left{
+      display:flex;
+      flex-direction:column;
+      gap: var(--gap);
+      padding: 22px 24px;
+      background: linear-gradient(180deg, rgba(18,20,34,.92), rgba(18,20,34,.55));
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      min-width:0;
+    }
+
+    .clock{
+      font-weight: 950;
+      font-size: clamp(64px, 7.2vw, var(--clockMax));
+      line-height: 1.0;
+      letter-spacing: 1px;
+    }
+    .date{
+      margin-top:10px;
+      color:var(--muted);
+      font-size: clamp(20px, 2.4vw, 30px);
+      font-weight: 750;
+    }
+
+    .card{
+      padding:18px 18px;
+      background: var(--panel2);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+    }
+
+    /* WEATHER */
+    .wxTop{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:14px;
+      flex-wrap:wrap;
+    }
+    .wxMain{
+      display:flex;
+      align-items:center;
+      gap:16px;
+      min-width: 0;
+    }
+    .wxIcon{
+      font-size: 44px;
+      line-height: 1;
+      flex: 0 0 auto;
+      filter: drop-shadow(0 2px 6px rgba(0,0,0,.35));
+    }
+    .wxDesc{
+      font-weight: 950;
+      font-size: clamp(24px, 2.8vw, 34px);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      max-width: 52vw;
+    }
+    .wxTemp{
+      font-weight: 950;
+      font-size: clamp(30px, 3.4vw, 44px);
+    }
+    .wxSub{
+      margin-top:10px;
+      color: var(--muted);
+      font-weight: 750;
+      font-size: clamp(18px, 2.0vw, 22px);
+    }
+    .wxSub strong{ color: var(--text); font-weight: 900; }
+
+    /* FORECAST */
+    .forecastTitle{
+      display:flex;
+      justify-content:space-between;
+      align-items:baseline;
+      gap:12px;
+      flex-wrap:wrap;
+      margin-bottom:14px;
+    }
+    .forecastTitle .h{
+      font-weight: 950;
+      font-size: 22px;
+      letter-spacing: .2px;
+    }
+    .forecastTitle .tiny{
+      color: var(--muted);
+      font-weight: 700;
+      font-size: 16px;
+    }
+    .fcGrid{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+    }
+    .fcDay{
+      padding: 14px 14px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius2);
+      background: rgba(0,0,0,.22);
+      min-width:0;
+    }
+    .fcHead{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+    }
+    .fcName{
+      font-weight: 950;
+      font-size: 18px;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+    .fcIcon{
+      font-size: 26px;
+      filter: drop-shadow(0 2px 6px rgba(0,0,0,.35));
+    }
+    .fcTemps{
+      margin-top:6px;
+      font-weight: 950;
+      font-size: 20px;
+    }
+    .fcMeta{
+      margin-top:6px;
+      color: var(--muted);
+      font-weight: 800;
+      font-size: 16px;
+    }
+
+    /* RADIO PLAYER */
+    .radioBlock{
+      display:flex;
+      flex-direction:column;
+      gap: 14px;
+    }
+
+    .labelRow{
+      display:flex;
+      justify-content:space-between;
+      align-items:baseline;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .labelRow label{
+      color: var(--muted);
+      font-weight: 900;
+      font-size: 18px;
+      letter-spacing: .2px;
+    }
+    .nowPlaying{
+      color: var(--muted);
+      font-weight: 800;
+      font-size: 16px;
+      max-width: 55%;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+      text-align:right;
+    }
+
+    select{
+      width:100%;
+      height: var(--controlH);
+      font-size: 26px;
+      font-weight: 850;
+      padding: 0 18px;
+      border-radius: var(--radius2);
+      border: 2px solid rgba(255,255,255,.14);
+      background: #0e1020;
+      color: var(--text);
+      outline: none;
+    }
+    select:focus{
+      border-color: var(--ring);
+      box-shadow: 0 0 0 6px rgba(59,130,246,.25);
+    }
+
+    .controlsRow{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .toggleBtn{
+      height: var(--controlH);
+      border-radius: var(--radius2);
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(27,31,54,.96), rgba(27,31,54,.70));
+      color: var(--text);
+      font-size: var(--controlFont);
+      font-weight: 950;
+      letter-spacing: .2px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      user-select:none;
+      cursor:pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: transform .08s ease, filter .15s ease;
+    }
+    .toggleBtn:active{ transform: scale(.985); }
+    .toggleBtn.on{
+      filter: saturate(1.2) brightness(1.12);
+      outline: 3px solid rgba(59,130,246,.55);
+      outline-offset: 2px;
+    }
+    .toggleBtn.off{
+      opacity: .92;
+    }
+
+    .volCard{
+      padding: 14px 16px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius2);
+      background: rgba(0,0,0,.20);
+      display:flex;
+      flex-direction:column;
+      gap: 10px;
+    }
+    .volTop{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+    }
+    .volTop .t{
+      color: var(--muted);
+      font-weight: 950;
+      font-size: 18px;
+      letter-spacing:.2px;
+    }
+    .volTop .p{
+      font-weight: 950;
+      font-size: 18px;
+    }
+
+    /* Fat slider */
+    input[type="range"]{
+      width:100%;
+      height: 54px; /* gives finger room */
+      background: transparent;
+      margin: 0;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+    input[type="range"]::-webkit-slider-runnable-track{
+      height: 16px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.18);
+      border: 1px solid rgba(255,255,255,.10);
+    }
+    input[type="range"]::-webkit-slider-thumb{
+      -webkit-appearance: none;
+      appearance: none;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: var(--text);
+      border: 2px solid rgba(0,0,0,.45);
+      margin-top: -15px; /* center thumb on track */
+      box-shadow: 0 10px 22px rgba(0,0,0,.45);
+    }
+    input[type="range"]:focus{
+      outline:none;
+    }
+    input[type="range"]:focus::-webkit-slider-runnable-track{
+      box-shadow: 0 0 0 6px rgba(59,130,246,.25);
+      border-color: rgba(59,130,246,.55);
+    }
+
+    .hint{
+      color: var(--muted);
+      font-size: 15px;
+      font-weight: 650;
+      line-height: 1.35;
+    }
+
+    /* RIGHT BUTTONS */
+    .right{
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      align-items:flex-end;
+      gap: 18px;
+      padding: 10px 0;
+    }
+    .bigBtn{
+      width: 440px;
+      height: var(--btnH);
+      border-radius: var(--radius);
+      border:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(27,31,54,.96), rgba(27,31,54,.70));
+      color: var(--text);
+      font-size: var(--btnFont);
+      font-weight: 980;
+      letter-spacing:.2px;
+      text-decoration:none;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+      transition: transform .08s ease, filter .15s ease;
+    }
+    .bigBtn:active{ transform: scale(.985); }
+    .bigBtn:hover{ filter: brightness(1.08); }
+
+    @media (max-width: 980px){
+      body{ overflow:auto; }
+      .wrap{ grid-template-columns: 1fr; height:auto; }
+      .right{ align-items:stretch; }
+      .bigBtn{ width:100%; }
+      .wxDesc{ max-width: 70vw; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <section class="left">
+      <div>
+        <div class="clock" id="clock">--:--</div>
+        <div class="date" id="date">---</div>
+      </div>
+
+      <div class="card" aria-live="polite">
+        <div class="wxTop">
+          <div class="wxMain">
+            <div class="wxIcon" id="wxIcon">⛅</div>
+            <div class="wxDesc" id="wxDesc">Weather: loading…</div>
+          </div>
+          <div class="wxTemp" id="wxTemp"></div>
+        </div>
+        <div class="wxSub" id="wxLine1"></div>
+        <div class="wxSub" id="wxLine2"></div>
+      </div>
+
+      <div class="card">
+        <div class="forecastTitle">
+          <div class="h">3-day forecast</div>
+          <div class="tiny" id="fcUpdated"></div>
+        </div>
+        <div class="fcGrid" id="fcGrid"></div>
+      </div>
+
+      <div class="card radioBlock">
+        <div class="labelRow">
+          <label for="radioSelect">Radio streams</label>
+          <div class="nowPlaying" id="nowPlaying">Not playing</div>
+        </div>
+
+        <select id="radioSelect">
+          <option value="">Choose a station…</option>
+        </select>
+
+        <div class="controlsRow">
+          <button class="toggleBtn off" id="toggleBtn" type="button">▶ Play</button>
+          <button class="toggleBtn off" id="stopBtn" type="button">⏹ Stop</button>
+        </div>
+
+        <div class="volCard">
+          <div class="volTop">
+            <div class="t">Volume (this page only)</div>
+            <div class="p" id="volPct">70%</div>
+          </div>
+          <input id="vol" type="range" min="0" max="100" value="70" />
+        </div>
+
+        <div class="hint">
+          The volume slider controls the <b>radio player in this page</b> (Chrome won’t allow a webpage to change Chromebook system volume).
+          For system volume, use the Chromebook volume keys.
+        </div>
+
+        <audio id="audio" preload="none" crossorigin="anonymous"></audio>
+      </div>
+    </section>
+
+    <aside class="right">
+      <a class="bigBtn" href="https://monochrome.tf/" target="_blank" rel="noopener">Monochrome.tf</a>
+      <a class="bigBtn" href="https://open.spotify.com/" target="_blank" rel="noopener">Spotify</a>
+      <a class="bigBtn" href="https://player.siriusxm.com/" target="_blank" rel="noopener">SiriusXM</a>
+    </aside>
+  </div>
+
+  <script>
+    // =========================
+    // LOCATION: Pictou, NS (approx)
+    // =========================
+    const LOCATION = { name: "Pictou, NS", lat: 45.676017, lon: -62.708861 };
+
+    // =========================
+    // RADIO STREAMS (fill later)
+    // =========================
+    // Put your fmstream.org MP3 URLs in here later.
+    const RADIO_STREAMS = [
+      { name: "Example (replace me)", url: "https://example.com/stream.mp3" }
+      // { name: "Station Name", url: "https://station/stream.mp3" },
+    ];
+
+    // =========================
+    // CLOCK
+    // =========================
+    const clockEl = document.getElementById("clock");
+    const dateEl  = document.getElementById("date");
+
+    function pad(n){ return String(n).padStart(2,"0"); }
+
+    function tickClock(){
+      const now = new Date();
+      clockEl.textContent = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+      dateEl.textContent  = new Intl.DateTimeFormat(undefined, {
+        weekday:"long", month:"long", day:"numeric"
+      }).format(now);
+    }
+    tickClock();
+    setInterval(tickClock, 1000);
+
+    // =========================
+    // WEATHER (Open-Meteo, no key)
+    // Temp + wind + POP% (today), with icons, plus 3-day forecast.
+    // =========================
+    const WX = {
+      0:{t:"Clear", i:"☀️"},
+      1:{t:"Mainly clear", i:"🌤️"},
+      2:{t:"Partly cloudy", i:"⛅"},
+      3:{t:"Overcast", i:"☁️"},
+      45:{t:"Fog", i:"🌫️"},
+      48:{t:"Rime fog", i:"🌫️"},
+      51:{t:"Light drizzle", i:"🌦️"},
+      53:{t:"Drizzle", i:"🌦️"},
+      55:{t:"Heavy drizzle", i:"🌧️"},
+      56:{t:"Freezing drizzle", i:"🌧️"},
+      57:{t:"Heavy freezing drizzle", i:"🌧️"},
+      61:{t:"Light rain", i:"🌧️"},
+      63:{t:"Rain", i:"🌧️"},
+      65:{t:"Heavy rain", i:"🌧️"},
+      66:{t:"Freezing rain", i:"🌧️"},
+      67:{t:"Heavy freezing rain", i:"🌧️"},
+      71:{t:"Light snow", i:"🌨️"},
+      73:{t:"Snow", i:"🌨️"},
+      75:{t:"Heavy snow", i:"❄️"},
+      77:{t:"Snow grains", i:"🌨️"},
+      80:{t:"Showers", i:"🌦️"},
+      81:{t:"Heavy showers", i:"🌧️"},
+      82:{t:"Violent showers", i:"⛈️"},
+      85:{t:"Snow showers", i:"🌨️"},
+      86:{t:"Heavy snow showers", i:"❄️"},
+      95:{t:"Thunderstorm", i:"⛈️"},
+      96:{t:"Thunder + hail", i:"⛈️"},
+      99:{t:"Heavy hail", i:"⛈️"}
+    };
+
+    const wxIconEl = document.getElementById("wxIcon");
+    const wxDescEl = document.getElementById("wxDesc");
+    const wxTempEl = document.getElementById("wxTemp");
+    const wxLine1  = document.getElementById("wxLine1");
+    const wxLine2  = document.getElementById("wxLine2");
+
+    const fcGridEl = document.getElementById("fcGrid");
+    const fcUpdatedEl = document.getElementById("fcUpdated");
+
+    function safeNum(n){
+      return (typeof n === "number" && isFinite(n)) ? n : null;
+    }
+
+    async function fetchWeather(){
+      const url =
+        `https://api.open-meteo.com/v1/forecast` +
+        `?latitude=${encodeURIComponent(LOCATION.lat)}` +
+        `&longitude=${encodeURIComponent(LOCATION.lon)}` +
+        `&current=temperature_2m,wind_speed_10m,weather_code` +
+        `&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,wind_speed_10m_max` +
+        `&forecast_days=3` +
+        `&temperature_unit=celsius&wind_speed_unit=kmh&timezone=auto`;
+
+      try{
+        const res = await fetch(url, { cache: "no-store" });
+        if(!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+
+        const c = data.current;
+        const code = c.weather_code;
+        const w = WX[code] ?? { t:`Code ${code}`, i:"❔" };
+
+        wxIconEl.textContent = w.i;
+        wxDescEl.textContent = w.t;
+        wxTempEl.textContent = `${Math.round(c.temperature_2m)}°C`;
+
+        const wind = safeNum(c.wind_speed_10m);
+        wxLine1.innerHTML = `Wind: <strong>${wind !== null ? Math.round(wind) + " km/h" : "—"}</strong>`;
+
+        const popToday = safeNum(data.daily?.precipitation_probability_max?.[0]);
+        const windMax = safeNum(data.daily?.wind_speed_10m_max?.[0]);
+        wxLine2.innerHTML =
+          `<strong>${LOCATION.name}</strong> • POP: <strong>${popToday !== null ? Math.round(popToday) + "%" : "—"}</strong>` +
+          ` • Max wind: <strong>${windMax !== null ? Math.round(windMax) + " km/h" : "—"}</strong>`;
+
+        // forecast cards
+        fcGridEl.innerHTML = "";
+        const times = data.daily.time || [];
+        for(let i=0;i<times.length;i++){
+          const day = new Date(times[i] + "T12:00:00");
+          const name = new Intl.DateTimeFormat(undefined, { weekday:"short" }).format(day);
+          const dcode = data.daily.weather_code[i];
+          const dw = WX[dcode] ?? { t:`Code ${dcode}`, i:"❔" };
+          const hi = Math.round(data.daily.temperature_2m_max[i]);
+          const lo = Math.round(data.daily.temperature_2m_min[i]);
+          const pop = safeNum(data.daily.precipitation_probability_max?.[i]);
+
+          const card = document.createElement("div");
+          card.className = "fcDay";
+          card.innerHTML = `
+            <div class="fcHead">
+              <div class="fcName">${name}</div>
+              <div class="fcIcon" title="${dw.t}">${dw.i}</div>
+            </div>
+            <div class="fcTemps">${hi}° / ${lo}°</div>
+            <div class="fcMeta">POP: ${pop !== null ? Math.round(pop) + "%" : "—"}</div>
+          `;
+          fcGridEl.appendChild(card);
+        }
+
+        const upd = data.current?.time ? new Date(data.current.time) : null;
+        fcUpdatedEl.textContent = upd
+          ? `Updated ${new Intl.DateTimeFormat(undefined,{hour:"numeric",minute:"2-digit"}).format(upd)}`
+          : "";
+
+      }catch(e){
+        wxIconEl.textContent = "⚠️";
+        wxDescEl.textContent = "Weather unavailable";
+        wxTempEl.textContent = "";
+        wxLine1.textContent = "Network blocked the weather request.";
+        wxLine2.textContent = LOCATION.name;
+        fcGridEl.innerHTML = "";
+        fcUpdatedEl.textContent = "";
+      }
+    }
+
+    fetchWeather();
+    setInterval(fetchWeather, 15 * 60 * 1000);
+
+    // =========================
+    // RADIO PLAYER (fat-finger)
+    // - Dropdown loads station (no autoplay)
+    // - Big Play/Pause toggle button
+    // - Big Stop button
+    // - Fat volume slider
+    // =========================
+    const sel = document.getElementById("radioSelect");
+    const audio = document.getElementById("audio");
+    const toggleBtn = document.getElementById("toggleBtn");
+    const stopBtn = document.getElementById("stopBtn");
+    const vol = document.getElementById("vol");
+    const volPct = document.getElementById("volPct");
+    const nowPlaying = document.getElementById("nowPlaying");
+
+    let currentStationName = "";
+    let loadedUrl = "";
+
+    function setToggleState(isPlaying){
+      if(isPlaying){
+        toggleBtn.textContent = "⏸ Pause";
+        toggleBtn.classList.add("on");
+        toggleBtn.classList.remove("off");
+      }else{
+        toggleBtn.textContent = "▶ Play";
+        toggleBtn.classList.remove("on");
+        toggleBtn.classList.add("off");
+      }
+    }
+
+    function setNowPlaying(text){
+      nowPlaying.textContent = text;
+    }
+
+    function setVol(v){
+      const n = Math.max(0, Math.min(100, Number(v)));
+      audio.volume = n / 100;     // page/tab volume only
+      vol.value = String(n);
+      volPct.textContent = `${n}%`;
+    }
+    setVol(70);
+
+    // Populate dropdown
+    for(const s of RADIO_STREAMS){
+      const opt = document.createElement("option");
+      opt.value = s.url;
+      opt.textContent = s.name;
+      sel.appendChild(opt);
+    }
+
+    // >>> IMPORTANT: dropdown LOADS ONLY, DOES NOT AUTOPLAY <<<
+    sel.addEventListener("change", () => {
+      if(!sel.value){
+        loadedUrl = "";
+        currentStationName = "";
+        audio.removeAttribute("src");
+        setNowPlaying("Not playing");
+        setToggleState(false);
+        return;
+      }
+      loadedUrl = sel.value;
+      currentStationName = sel.options[sel.selectedIndex].textContent || "Station";
+      audio.src = loadedUrl; // load only
+      setNowPlaying(`Loaded: ${currentStationName}`);
+      setToggleState(false);
+    });
+
+    toggleBtn.addEventListener("click", async () => {
+      if(!audio.src){
+        alert("Pick a station first.");
+        return;
+      }
+      if(audio.paused){
+        try{
+          await audio.play();
+          setNowPlaying(`Playing: ${currentStationName || "Station"}`);
+          setToggleState(true);
+        }catch(err){
+          alert("This stream refused to play. Try a different MP3 stream URL.");
+          setNowPlaying("Not playing");
+          setToggleState(false);
+        }
+      }else{
+        audio.pause();
+        setNowPlaying(`Paused: ${currentStationName || "Station"}`);
+        setToggleState(false);
+      }
+    });
+
+    stopBtn.addEventListener("click", () => {
+      audio.pause();
+      audio.currentTime = 0;
+      setNowPlaying(audio.src ? `Loaded: ${currentStationName || "Station"}` : "Not playing");
+      setToggleState(false);
+    });
+
+    vol.addEventListener("input", () => setVol(vol.value));
+
+    // Keep UI in sync if playback changes outside buttons
+    audio.addEventListener("play", () => setToggleState(true));
+    audio.addEventListener("pause", () => setToggleState(false));
+    audio.addEventListener("ended", () => {
+      setNowPlaying(audio.src ? `Loaded: ${currentStationName || "Station"}` : "Not playing");
+      setToggleState(false);
+    });
+    audio.addEventListener("error", () => {
+      setNowPlaying("Error loading stream");
+      setToggleState(false);
+    });
+
+    // Start state
+    setNowPlaying("Not playing");
+    setToggleState(false);
+  </script>
+</body>
+</html>
