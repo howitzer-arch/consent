@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dark Start Page</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+@keyframes scroll-left {
+  0% { transform: translateX(0%); }
+  100% { transform: translateX(-100%); }
+}
+
+#weather-forecast {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.5rem;
+  text-align: center;
+  font-size: 0.75rem;
+}
+
+#weather-forecast img {
+  display: block;
+  margin: 0 auto;
+  width: 40px;
+  height: 40px;
+}
+
+@media (max-width: 640px) {
+  #weather-forecast {
+    grid-template-columns: repeat(3, 1fr);
+    font-size: 0.65rem;
+  }
+}
+
+.nhl-ticker-bar {
+  background-color: #1f2937;
+  border-bottom: 1px solid #374151;
+  overflow: hidden;
+  white-space: nowrap;
+  height: 45px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 9999;
+}
+
+
+.ticker-content {
+  display: inline-block;
+  padding-left: 100%;
+  animation: scroll-left 40s linear infinite;
+  font-size: 1em;
+  line-height: 1.8em;
+}
+
+.nhl-game {
+  display: inline-flex;
+  align-items: center;
+  margin: 0 2em;
+}
+
+.team-logo {
+  height: 20px;
+  width: 20px;
+  margin-right: 6px;
+}
+
+.status {
+  font-weight: bold;
+  margin-left: 1em;
+  padding: 2px 2px;
+  border-radius: 1px;
+  font-size: 0.75em;
+}
+
+.status.live { background-color: #10b981; color: white; }
+.status.final { background-color: #6b7280; color: white; }
+.status.scheduled { background-color: #facc15; color: black; }
+
+.ticker-container {
+  overflow: hidden;
+  white-space: nowrap;
+  position: relative;
+}
+
+body {
+  background-color: #121212;
+  color: #e0e0e0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  min-height: 100vh;
+  height: auto;
+  display: flex;
+  flex-direction: column;
+  padding-top: 5px; /* Matches ticker height */
+}
+
+.link-button {
+  transition: all 0.2s ease;
+}
+
+.link-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.weather-card {
+  background: linear-gradient(135deg, #3e4a60, #01060e);
+  border-radius: 12px;
+  height: 270px;
+  position: relative;
+  min-height: 375px; /* Slightly increased to fit new detail */
+}
+
+.link-column {
+  background-color: rgba(30,41,59,0.5);
+  border-radius: 8px;
+}
+
+.radio-button {
+  background-color: #1f2937;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 0;
+  font-size: 1rem;
+  cursor: pointer;
+}
+.radio-button.playing {
+  background-color: #10b981;
+}
+
+@keyframes banner-scroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-100%); }
+}
+
+</style>
+</head>
+<body>
+
+<!-- NHL Ticker -->
+<div class="nhl-ticker-bar py-2 px-4">
+  <div id="nhl-ticker" class="ticker-content">NHL Scores Loading...</div>
+</div>
+
+<!-- Layout Container -->
+<div class="p-4 mt-12 grid grid-cols-1 lg:grid-cols-4 gap-4">
+
+<!-- Weather Widget Column -->
+<div class="col-span-1">
+  <div class="flex flex-col gap-4">
+    
+    <!-- Weather Card: Pictou -->
+    <div class="bg-gray-800 p-4 rounded-xl text-gray-100 weather-card relative" data-weather-card
+         data-location-label="Pictou, NS"
+         data-query="Pictou, Nova Scotia">
+      
+      <div class="absolute top-2 right-2 flex gap-2">
+        <a href="https://weather.com/weather/today/l/Pictou+Canada">
+          <img src="https://img.icons8.com/ios-filled/24/ffffff/cloud.png" alt="Weather Channel" title="Weather Channel">
+        </a>
+        <a href="https://www.wunderground.com/weather/ca/pictou">
+          <img src="https://img.icons8.com/ios-filled/24/ffffff/storm.png" alt="Weather Underground" title="Weather Underground">
+        </a>
+      </div>
+
+      <div class="text-lg font-bold mb-1 weather-location">Loading...</div>
+      <div class="flex items-center space-x-2 mb-2">
+        <img class="weather-icon w-12 h-12" src="" alt="">
+        <div>
+          <div class="text-3xl font-extrabold weather-temp">--°C</div>
+          <div class="text-sm capitalize weather-condition">Fetching weather...</div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2 text-xs mb-2">
+        <div>Feels Like: <span class="weather-feelslike">--°C</span></div>
+        <div>Humidity: <span class="weather-humidity">--%</span></div>
+        <div>Wind: <span class="weather-wind">-- km/h</span></div>
+        <div>Pressure: <span class="weather-pressure">-- hPa</span></div>
+        <div>Precip: <span class="weather-pop">--%</span></div>
+        <div>UV: <span class="weather-uv">--</span></div>
+        <div>Sunrise: <span class="weather-sunrise">--:--</span></div>
+        <div>Sunset: <span class="weather-sunset">--:--</span></div>
+      </div>
+
+      <div class="mt-3">
+        <div class="text-xs font-bold mb-1">5-Day Forecast</div>
+        <div class="weather-forecast" style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:.5rem;text-align:center;font-size:.75rem;"></div>
+      </div>
+
+      <div class="text-xs mt-2">Last updated: <span class="weather-updated">--:--</span></div>
+    </div>
+
+    <!-- Weather Card: Cameron Settlement / Lower Caledonia -->
+<div class="bg-gray-800 p-4 rounded-xl text-gray-100 weather-card relative" data-weather-card
+     data-location-label="Cameron Settlement / Lower Caledonia, NS"
+     data-query="45.283333,-62.45">
+  
+  <div class="absolute top-2 right-2 flex gap-2">
+    <a href="https://weather.com/weather/today/l/45.283333,-62.45">
+      <img src="https://img.icons8.com/ios-filled/24/ffffff/cloud.png"
+           alt="Weather Channel" title="Weather Channel">
+    </a>
+    <a href="https://www.wunderground.com/weather/ca/lower-caledonia">
+      <img src="https://img.icons8.com/ios-filled/24/ffffff/storm.png"
+           alt="Weather Underground" title="Weather Underground">
+    </a>
+  </div>
+
+  <div class="text-lg font-bold mb-1 weather-location">Loading...</div>
+  <div class="flex items-center space-x-2 mb-2">
+    <img class="weather-icon w-12 h-12" src="" alt="">
+    <div>
+      <div class="text-3xl font-extrabold weather-temp">--°C</div>
+      <div class="text-sm capitalize weather-condition">Fetching weather...</div>
+    </div>
+  </div>
+
+
+      <div class="grid grid-cols-2 gap-2 text-xs mb-2">
+        <div>Feels Like: <span class="weather-feelslike">--°C</span></div>
+        <div>Humidity: <span class="weather-humidity">--%</span></div>
+        <div>Wind: <span class="weather-wind">-- km/h</span></div>
+        <div>Pressure: <span class="weather-pressure">-- hPa</span></div>
+        <div>Precip: <span class="weather-pop">--%</span></div>
+        <div>UV: <span class="weather-uv">--</span></div>
+        <div>Sunrise: <span class="weather-sunrise">--:--</span></div>
+        <div>Sunset: <span class="weather-sunset">--:--</span></div>
+      </div>
+
+      <div class="mt-3">
+        <div class="text-xs font-bold mb-1">5-Day Forecast</div>
+        <div class="weather-forecast" style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:.5rem;text-align:center;font-size:.75rem;"></div>
+      </div>
+
+      <div class="text-xs mt-2">Last updated: <span class="weather-updated">--:--</span></div>
+    </div>
+
+  </div>
+
+  <!-- Keep your LiveCoinWatch widget below both cards -->
+  <script defer src="https://www.livecoinwatch.com/static/lcw-widget.js"></script>
+  <div class="livecoinwatch-widget-5" lcw-base="CAD" lcw-color-tx="#999999" lcw-marquee-1="coins" lcw-marquee-2="movers" lcw-marquee-items="10"></div>
+</div>
+
+  <!-- Main Content Column -->
+  <div class="col-span-1 lg:col-span-3">
+    <div class="bg-gray-900 rounded-xl p-4">
+<h1 id="daily-banner"
+    class="text-xl font-bold mb-2 overflow-hidden whitespace-nowrap relative">
+  <span id="daily-banner-text" class="inline-block will-change-transform"></span>
+</h1>
+
+      <p id="life-quote"
+   class="text-sm text-gray-400 whitespace-nowrap overflow-hidden truncate">
+</p>
+
+      
+<!-- Link Buttons and Other Content -->
+<div class="col-span-1 lg:col-span-3">
+  <div class="grid grid-cols-3 md:grid-cols-6 gap-3 mb-6">
+    <a href="https://www.reddit.com" class="link-button bg-red-600 hover:bg-red-700 p-3 rounded-lg flex flex-col items-center justify-center">
+      <i class="fab fa-reddit text-3xl mb-1"></i><span>Reddit</span></a>
+    <a href="https://www.facebook.com" class="link-button bg-blue-600 hover:bg-blue-700 p-3 rounded-lg flex flex-col items-center justify-center">
+      <i class="fab fa-facebook text-3xl mb-1"></i><span>Facebook</span></a>
+    <a href="https://bsky.app" class="link-button bg-sky-500 hover:bg-sky-600 p-3 rounded-lg flex flex-col items-center justify-center">
+      <i class="fas fa-cloud text-3xl mb-1"></i><span>Bluesky</span></a>
+    <a href="https://www.youtube.com" class="link-button bg-red-500 hover:bg-red-600 p-3 rounded-lg flex flex-col items-center justify-center">
+      <i class="fab fa-youtube text-3xl mb-1"></i><span>YouTube</span></a>
+    <a href="https://www.amazon.ca" class="link-button bg-amber-500 hover:bg-amber-600 p-3 rounded-lg flex flex-col items-center justify-center">
+      <i class="fab fa-amazon text-3xl mb-1"></i><span>Amazon.ca</span></a>
+    <a href="https://www.ebay.ca" class="link-button bg-blue-400 hover:bg-blue-500 p-3 rounded-lg flex flex-col items-center justify-center">
+      <i class="fab fa-ebay text-3xl mb-1"></i><span>eBay</span></a>
+    <a href="https://chatgpt.com/" class="link-button bg-zinc-600 hover:bg-zinc-600 p-3 rounded-lg flex flex-col items-center justify-center">
+      <i class="fas fa-newspaper text-3xl mb-1"></i><span>CHAT GPT</span></a>
+    <a href="http://192.168.2.24:81/ui3.htm?t=live&group=Index" class="link-button bg-gray-700 hover:bg-gray-600 p-3 rounded-lg flex flex-col items-center justify-center">
+      <i class="fas fa-video text-3xl mb-1"></i><span>CCTV</span></a>
+    <a href="https://www.virustotal.com/gui/home/upload" class="link-button bg-gray-700 hover:bg-gray-600 p-3 rounded-lg flex flex-col items-center justify-center">
+      <i class="fas fa-calendar text-3xl mb-1"></i><span>VIRUS TOTAL</span></a>
+    <a href="https://suno.com/@mashtrim" class="link-button bg-gray-700 hover:bg-gray-600 p-3 rounded-lg flex flex-col items-center justify-center">
+      <i class="fas fa-music text-3xl mb-1"></i><span>MASHTRIM</span></a>
+    <a href="https://www.hennesseycasting.com/account/talent/projects.php" class="link-button bg-[#d2a679] hover:bg-[#c8965f] p-3 rounded-lg flex flex-col items-center justify-center">
+      <i class="fas fa-film text-3xl mb-1"></i><span>CASTING</span></a>
+    <a href="https://watch.sportsnet.ca/highlights/nhl/" class="link-button bg-red-700 hover:bg-red-600 p-3 rounded-lg flex flex-col items-center justify-center">
+      <i class="fas fa-hockey-puck text-3xl mb-1"></i><span>NHL LAST NIGHT</span></a>
+    <a href="https://chatgpt.com/" class="link-button bg-gray-700 hover:bg-gray-600 p-3 rounded-lg flex flex-col items-center justify-center">
+      <i class="fas fa-newspaper text-3xl mb-1"></i><span>CHAT GPT</span></a>
+    <a href="https://login.tailscale.com/admin/machines" class="link-button bg-violet-700 hover:bg-violet-600 p-3 rounded-lg flex flex-col items-center justify-center">
+      <i class="fa-solid fa-network-wired"></i><span>TAILSCALE</span></a>
+    <a href="https://www.broadcastify.com/webPlayer/6773" class="link-button bg-rose-700 hover:bg-rose-600 p-3 rounded-lg flex flex-col items-center justify-center">
+      <i class="fas fa-fire-extinguisher text-3xl mb-1"></i><span>EMERGENCY</span></a>
+    <a href="https://suno.com/@mashtrim" class="link-button bg-gray-700 hover:bg-gray-600 p-3 rounded-lg flex flex-col items-center justify-center">
+      <i class="fas fa-music text-3xl mb-1"></i><span>MASHTRIM</span></a>
+    <a href="https://www.hennesseycasting.com/account/talent/projects.php" class="link-button bg-gray-700 hover:bg-gray-600 p-3 rounded-lg flex flex-col items-center justify-center">
+      <i class="fas fa-film text-3xl mb-1"></i><span>CASTING</span></a>
+    <a href="https://monochrome.tf/library/" class="link-button bg-green-700 hover:bg-green-600 p-3 rounded-lg flex flex-col items-center justify-center">
+      <i class="fas fa-mask text-3xl mb-1"></i><span>MONOCHROME</span></a>
+  </div>
+<!-- Text Link Columns -->
+<div class="grid grid-cols-1 md:grid-cols-6 gap-4 mt-4">
+<div class="link-column p-3"><h3 class="font-bold text-blue-400 mb-2">MUSIC STREAMS</h3>
+<ul class="space-y-1">
+<li><a href="https://www.radioplug.co.uk/home" class="hover:text-blue-400">RADIOPLUG</a></li>
+<li><a href="http://unencrypted.radiolise.com/" class="hover:text-blue-400">RADIOLISE</a></li>
+<li><a href="http://nossl.fmstream.org/index.php" class="hover:text-blue-400">FM Stream.org</a></li>
+<li><a href="https://somafm.com/" class="hover:text-blue-400">SOMA-FM</a></li>
+<li><a href="https://dir.xiph.org/" class="hover:text-blue-400">ICECAST</a></li>
+<li><a href="http://ingest2.cdnstream1.com:7080/1369_128" class="hover:text-blue-400">CRUCIAL VELOCITY</a></li>
+</ul></div>
+<div class="link-column p-3"><h3 class="font-bold text-blue-400 mb-2">News</h3>
+<ul class="space-y-1">
+<li><a href="https://www.cbc.ca/news/canada" class="hover:text-blue-400">CBC News</a></li>
+<li><a href="https://www.france24.com/en/" class="hover:text-blue-400">FRANCE 24</a></li>
+<li><a href="https://apnews.com/" class="hover:text-blue-400">AP</a></li>
+<li><a href="https://www.reuters.com/" class="hover:text-blue-400">REUTERS</a></li>
+<li><a href="https://www.npr.org/" class="hover:text-blue-400">NPR</a></li>
+<li><a href="https://www.bbc.com/news" class="hover:text-blue-400">BBC</a></li>
+</ul></div>
+<div class="link-column p-3"><h3 class="font-bold text-blue-400 mb-2">Sports</h3>
+<ul class="space-y-1">
+<li><a href="#" class="hover:text-blue-400">NHL</a></li>
+<li><a href="#" class="hover:text-blue-400">TSN</a></li>
+<li><a href="#" class="hover:text-blue-400">Sportsnet</a></li>
+<li><a href="#" class="hover:text-blue-400">ESPN</a></li>
+<li><a href="https://www.dailyfaceoff.com/starting-goalies" class="hover:text-blue-400">Goalie Start</a></li>
+<li><a href="https://hockey.fantasysports.yahoo.com/" class="hover:text-blue-400">Yahoo! Fantasy</a></li>
+</ul></div>
+<div class="link-column p-3"><h3 class="font-bold text-blue-400 mb-2">LIVE HOCKEY</h3>
+<ul class="space-y-1">
+<li><a href="https://onhockey.tv/" class="hover:text-blue-400">OnHockey</a></li>
+<li><a href="https://thetvapp.to/nhl" class="hover:text-blue-400">TVAPP</a></li>
+<li><a href="https://www.rbtv77.com/hockey.html" class="hover:text-blue-400">RBTV77</a></li>
+<li><a href="#" class="hover:text-blue-400">F considerations</a></li>
+<li><a href="#" class="hover:text-blue-400">F considerations</a></li>
+<li><a href="#" class="hover:text-blue-400">F considerations</a></li>
+</ul></div>
+<div class="link-column p-3"><h3 class="font-bold text-blue-400 mb-2">NETWORK</h3>
+<ul class="space-y-1">
+<li><a href="192.168.2.1" class="hover:text-blue-400">HomeHub3000</a></li>
+<li><a href="#" class="hover:text-blue-400">ASUS AC5300</a></li>
+<li><a href="#" class="hover:text-blue-400">Halifax</a></li>
+<li><a href="#" class="hover:text-blue-400">Events</a></li>
+<li><a href="#" class="hover:text-blue-400">Weather</a></li>
+<li><a href="#" class="hover:text-blue-400">Traffic</a></li>
+</ul></div>
+<div class="link-column p-3"><h3 class="font-bold text-blue-400 mb-2">Local</h3>
+<ul class="space-y-1">
+<li><a href="https://www.townofpictou.ca/" class="hover:text-blue-400">Town of Pictou</a></li>
+<li><a href="#" class="hover:text-blue-400">Nova Scotia</a></li>
+<li><a href="#" class="hover:text-blue-400">Halifax</a></li>
+<li><a href="#" class="hover:text-blue-400">Events</a></li>
+<li><a href="#" class="hover:text-blue-400">Weather</a></li>
+<li><a href="#" class="hover:text-blue-400">Traffic</a></li>
+</ul></div>
+</div>
+<!-- Add all the rest of your 'grid grid-cols-4 md:grid-cols-10...' links here -->
+<div class="grid grid-cols-6 md:grid-cols-9 gap-7 text-sm p-8">
+  <div>
+    <h3 class="text-white font-bold mb-2">BANKING</h3>
+    <a href="https://www1.royalbank.com/" class="block hover:text-blue-400">RBC</a>
+    <a href="https://www.scotiabank.com/ca/en/personal.html" class="block hover:text-blue-400">SCOTIABANK</a>
+    <a href="https://www.td.com/us/en/personal-banking" class="block hover:text-blue-400">TD BANK</a>
+    <a href="#" class="block hover:text-blue-400">Link 1D</a>
+    <a href="#" class="block hover:text-blue-400">Link 1E</a>
+  </div>
+  <div>
+    <h3 class="text-white font-bold mb-2">E-MAIL</h3>
+    <a href="https://outlook.live.com/mail/0/" class="block hover:text-blue-400">OUTLOOK</a>
+    <a href="https://mail.google.com/mail/u/0/#inbox" class="block hover:text-blue-400">GMAIL</a>
+    <a href="https://login.yahoo.com/" class="block hover:text-blue-400">Yahoo!</a>
+    <a href="https://accounts.zoho.com" class="block hover:text-blue-400">ZOHO</a>
+    <a href="https://www.mail.com/" class="block hover:text-blue-400">MAIL.com</a>
+  </div>
+  <div>
+    <h3 class="text-white font-bold mb-2">Title 3</h3>
+    <a href="https://www.tide-forecast.com/locations/Pictou-Nova-Scotia/tides/latest" class="block hover:text-blue-400">TIDE FORECAST</a>
+    <a href="https://novascotia.ca/burnsafe//" class="block hover:text-blue-400">BURNSAFE</a>
+    <a href="https://outagemap.nspower.ca/external/default.html" class="block hover:text-blue-400">NSPOWER MAP</a>
+    <a href="#" class="block hover:text-blue-400">Link 3D</a>
+    <a href="#" class="block hover:text-blue-400">Link 3E</a>
+  </div>
+  <div>
+    <h3 class="text-white font-bold mb-2">SHOPPING</h3>
+    <a href="https://www.kijiji.ca/" class="block hover:text-blue-400">KIJIJI</a>
+    <a href="https://www.vevor.ca/" class="block hover:text-blue-400">VEVOR</a>
+    <a href="https://www.aliexpress.com/" class="block hover:text-blue-400">AliExpress</a>
+    <a href="#" class="block hover:text-blue-400">Link 4D</a>
+    <a href="#" class="block hover:text-blue-400">Link 4E</a>
+  </div>
+  <div>
+    <h3 class="text-white font-bold mb-2">AI IMAGES</h3>
+    <a href="https://perchance.org/ai-text-to-image-generator" class="block hover:text-blue-400">PERCHANCE</a>
+    <a href="https://creator.nightcafe.studio/" class="block hover:text-blue-400">NIGHTCAFE</a>
+    <a href="#" class="block hover:text-blue-400">Link 5D</a>
+    <a href="#" class="block hover:text-blue-400">Link 5E</a>
+  </div>
+  <div>
+    <h3 class="text-white font-bold mb-2">AI CHAT</h3>
+    <a href="https://chat.deepseek.com/" class="block hover:text-blue-400">DEEPSEEK</a>
+    <a href="https://www.perplexity.ai/" class="block hover:text-blue-400">PERPLEXITY</a>
+    <a href="https://gemini.google.com/app" class="block hover:text-blue-400">GEMINI</a>
+    <a href="https://claude.ai/new" class="block hover:text-blue-400">CLAUDE</a>
+    <a href="#" class="block hover:text-blue-400">Link 6E</a>
+  </div>
+  <div>
+    <h3 class="text-white font-bold mb-2">AI VIDEO</h3>
+    <a href="#" class="block hover:text-blue-400">Link 7A</a>
+    <a href="#" class="block hover:text-blue-400">Link 7B</a>
+    <a href="#" class="block hover:text-blue-400">Link 7C</a>
+    <a href="#" class="block hover:text-blue-400">Link 7D</a>
+    <a href="#" class="block hover:text-blue-400">Link 7E</a>
+  </div>
+  <div>
+    <h3 class="text-white font-bold mb-2">AI MISC</h3>
+    <a href="https://soloist.ai/" class="block hover:text-blue-400">SOLO WEB</a>
+    <a href="https://huggingface.co/spaces/enzostvs/deepsite" class="block hover:text-blue-400">DEEPSITE</a>
+    <a href="https://huggingface.co/" class="block hover:text-blue-400">HUGGINGFACE</a>
+    <a href="#" class="block hover:text-blue-400">Link 8D</a>
+    <a href="#" class="block hover:text-blue-400">Link 8E</a>
+  </div>
+  <div>
+    <h3 class="text-white font-bold mb-2">IPTV</h3>
+    <a href="https://tvpluspanel.net/login" class="block hover:text-blue-400">TVPlus Panel</a>
+    <a href="https://troypoint.com/iptv/" class="block hover:text-blue-400">TROYPOINT</a>
+    <a href="#" class="block hover:text-blue-400">Link 8C</a>
+    <a href="#" class="block hover:text-blue-400">Link 8D</a>
+    <a href="#" class="block hover:text-blue-400">Link 8E</a>
+  </div>
+  <div>
+    <h3 class="text-white font-bold mb-2">Title 7</h3>
+    <a href="#" class="block hover:text-blue-400">Link 7A</a>
+    <a href="#" class="block hover:text-blue-400">Link 7B</a>
+    <a href="#" class="block hover:text-blue-400">Link 7C</a>
+    <a href="#" class="block hover:text-blue-400">Link 7D</a>
+    <a href="#" class="block hover:text-blue-400">Link 7E</a>
+  </div>
+  <div>
+    <h3 class="text-white font-bold mb-2">NEWS</h3>
+    <a href="https://www.inoreader.com/all_articles" class="block hover:text-blue-400">INOREADER</a>
+    <a href="#" class="block hover:text-blue-400">Link 7B</a>
+    <a href="#" class="block hover:text-blue-400">Link 7C</a>
+    <a href="#" class="block hover:text-blue-400">Link 7D</a>
+    <a href="#" class="block hover:text-blue-400">Link 7E</a>
+  </div>
+  <div>
+    <h3 class="text-white font-bold mb-2">Title 7</h3>
+    <a href="#" class="block hover:text-blue-400">Link 7A</a>
+    <a href="#" class="block hover:text-blue-400">Link 7B</a>
+    <a href="#" class="block hover:text-blue-400">Link 7C</a>
+    <a href="#" class="block hover:text-blue-400">Link 7D</a>
+    <a href="#" class="block hover:text-blue-400">Link 7E</a>
+  </div>
+  <div>
+    <h3 class="text-white font-bold mb-2">PIRATE</h3>
+    <a href="https://lemmy.ml/c/piracy" class="block hover:text-blue-400">LEMMY:PIRACY</a>
+    <a href="https://github.com/fmhy/FMHY/wiki/FREEMEDIAHECKYEAH" class="block hover:text-blue-400">FREEMEDIAHECK</a>
+    <a href="https://github.com/Igglybuff/awesome-piracy" class="block hover:text-blue-400">IGGLY PIRATE LINKS</a>
+    <a href="#" class="block hover:text-blue-400">Link 7D</a>
+    <a href="#" class="block hover:text-blue-400">Link 7E</a>
+  </div>
+  <div>
+    <h3 class="text-white font-bold mb-2">D/L MEDIA</h3>
+    <a href="https://cobalt.tools/" class="block hover:text-blue-400">Cobalt SAVE</a>
+    <a href="https://cnvmp3.com/v25" class="block hover:text-blue-400">CNV MP3</a>
+    <a href="#" class="block hover:text-blue-400">Link 7C</a>
+    <a href="#" class="block hover:text-blue-400">Link 7D</a>
+    <a href="#" class="block hover:text-blue-400">Link 7E</a>
+  </div>
+  <div>
+    <h3 class="text-white font-bold mb-2">WEBCAMS</h3>
+    <a href="https://www.geocam.ru/en/" class="block hover:text-blue-400">World WEBCAMS</a>
+    <a href="https://www.webcamtaxi.com/en/" class="block hover:text-blue-400">Webcam TAXI</a>
+    <a href="https://www.twitch.tv/directory/category/just-chatting" class="block hover:text-blue-400">justchattingTWITCH</a>
+    <a href="http://www.insecam.org/en/" class="block hover:text-blue-400">INSECAM</a>
+    <a href="https://www.novascotiawebcams.com/" class="block hover:text-blue-400">NS CAMS</a>
+    <a href="https://www.earthcamtv.com/" class="block hover:text-blue-400">EARTH CAMS</a>
+  </div>
+  <div>
+    <h3 class="text-white font-bold mb-2">FOURTH REICH</h3>
+    <a href="https://www.trumpstruth.org/" class="block hover:text-blue-400">TRUMP 'TRUTHS'</a>
+    <a href="#" class="block hover:text-blue-400">Link 7B</a>
+    <a href="#" class="block hover:text-blue-400">Link 7C</a>
+    <a href="#" class="block hover:text-blue-400">Link 7D</a>
+    <a href="#" class="block hover:text-blue-400">Link 7E</a>
+  </div>
+</div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+// NHL Ticker
+async function fetchNHLScores() {
+  try {
+    const res = await fetch("https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/scoreboard");
+    const data = await res.json();
+    const games = data.events.map(event => {
+      const home = event.competitions[0].competitors.find(c => c.homeAway === "home");
+      const away = event.competitions[0].competitors.find(c => c.homeAway === "away");
+      const homeTeam = { name: home.team.abbreviation, logo: home.team.logo, score: home.score };
+      const awayTeam = { name: away.team.abbreviation, logo: away.team.logo, score: away.score };
+      const rawStatus = event.status?.type?.shortDetail || "Scheduled";
+      let statusClass = "scheduled";
+      if (rawStatus.toLowerCase().includes("final")) statusClass = "final";
+      if (rawStatus.toLowerCase().includes("live") || rawStatus.toLowerCase().includes("in progress")) statusClass = "live";
+      return `<span class="nhl-game">
+        <img src="${awayTeam.logo}" class="team-logo" alt="${awayTeam.name}">${awayTeam.name} ${awayTeam.score}
+        <span class="mx-2">vs</span>
+        <img src="${homeTeam.logo}" class="team-logo" alt="${homeTeam.name}">${homeTeam.name} ${homeTeam.score}
+        <span class="status ${statusClass}">[${rawStatus}]</span>
+      </span>`;
+    });
+    document.getElementById("nhl-ticker").innerHTML = games.join(" ");
+  } catch (err) {
+    document.getElementById("nhl-ticker").textContent = "Unable to fetch NHL scores.";
+  }
+}
+fetchNHLScores();
+setInterval(fetchNHLScores, 300000);
+</script>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    document.querySelectorAll('a[href]').forEach(link => {
+      link.setAttribute('target', '_blank');
+      link.setAttribute('rel', 'noopener noreferrer'); // this is for security
+    });
+  });
+</script>
+
+<!-- New Detailed Weather Script -->
+<script>
+const WEATHER_API_KEY = "094538f60cb14870a9805051252305"; // yeah it's exposed, that's on you
+
+async function fetchAndRenderCard(card) {
+  const query = card.dataset.query;                // e.g. "Pictou, Nova Scotia" or "B0H 1E0"
+  const label = card.dataset.locationLabel || query;
+
+  const el = (sel) => card.querySelector(sel);
+
+  try {
+    const url = `https://api.weatherapi.com/v1/forecast.json?key=${WEATHER_API_KEY}&q=${encodeURIComponent(query)}&days=5&aqi=no&alerts=no`;
+    const res = await fetch(url, { cache: "no-store" });
+    if (!res.ok) throw new Error(`WeatherAPI HTTP ${res.status}`);
+    const data = await res.json();
+
+    el(".weather-location").textContent = `${data.location.name}, ${data.location.region}`;
+    el(".weather-temp").textContent = `${data.current.temp_c}°C`;
+    el(".weather-condition").textContent = data.current.condition.text;
+
+    const icon = el(".weather-icon");
+    icon.src = `https:${data.current.condition.icon}`;
+    icon.alt = data.current.condition.text;
+
+    el(".weather-feelslike").textContent = `${data.current.feelslike_c}°C`;
+    el(".weather-humidity").textContent = `${data.current.humidity}%`;
+    el(".weather-wind").textContent = `${data.current.wind_kph} km/h ${data.current.wind_dir}`;
+    el(".weather-pressure").textContent = `${data.current.pressure_mb} hPa`;
+    el(".weather-pop").textContent = `${data.forecast.forecastday?.[0]?.day?.daily_chance_of_rain ?? 0}%`;
+    el(".weather-uv").textContent = data.current.uv;
+
+    el(".weather-sunrise").textContent = data.forecast.forecastday[0].astro.sunrise;
+    el(".weather-sunset").textContent = data.forecast.forecastday[0].astro.sunset;
+
+    el(".weather-updated").textContent = new Date().toLocaleTimeString('en-CA', {
+      hour: '2-digit', minute: '2-digit'
+    });
+
+    // 5-day forecast
+    const forecastHTML = data.forecast.forecastday.map(day => {
+      const date = new Date(day.date);
+      const weekday = date.toLocaleDateString('en-CA', { weekday: 'short' });
+      return `
+        <div>
+          <div>${weekday}</div>
+          <img src="https:${day.day.condition.icon}" alt="${day.day.condition.text}" style="display:block;margin:0 auto;width:40px;height:40px;">
+          <div>${Math.round(day.day.maxtemp_c)}° / ${Math.round(day.day.mintemp_c)}°</div>
+        </div>
+      `;
+    }).join("");
+
+    el(".weather-forecast").innerHTML = forecastHTML;
+
+  } catch (err) {
+    el(".weather-location").textContent = `${label} (Unavailable)`;
+    el(".weather-condition").textContent = "Weather fetch failed";
+  }
+}
+
+async function fetchAllWeatherCards() {
+  const cards = document.querySelectorAll("[data-weather-card]");
+  await Promise.all([...cards].map(fetchAndRenderCard));
+}
+
+fetchAllWeatherCards();
+setInterval(fetchAllWeatherCards, 900000); // every 15 min
+</script>
+<!-- Radio Player (Bottom Right) -->
+<div id="radio-player"
+     class="fixed bottom-4 right-4 z-[10000] w-[360px] max-w-[92vw] bg-gray-900/95 backdrop-blur
+            border border-gray-700 rounded-xl shadow-lg p-3 text-gray-100">
+
+  <div class="flex items-center justify-between mb-2">
+    <div class="text-sm font-bold">Radio</div>
+    <button id="radio-close" class="text-gray-400 hover:text-gray-200" title="Hide player">✕</button>
+  </div>
+
+  <div class="flex gap-2 items-center mb-2">
+    <button id="radio-prev"
+            class="px-3 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 font-semibold text-sm"
+            title="Previous station">⏮</button>
+
+    <button id="radio-play"
+            class="px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 font-semibold text-sm">
+      ▶ Play
+    </button>
+
+    <button id="radio-stop"
+            class="px-3 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 font-semibold text-sm">
+      ■ Stop
+    </button>
+
+    <button id="radio-next"
+            class="px-3 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 font-semibold text-sm"
+            title="Next station">⏭</button>
+  </div>
+
+  <div class="mb-2">
+    <select id="radio-station"
+            class="w-full bg-gray-800 border border-gray-700 rounded-lg px-2 py-2 text-sm">
+
+      <!-- listen to the RADIO -->
+     
+
+      <optgroup label="CANADA Rock">
+        <option value="https://ais-sa2.cdnstream1.com/1369_128">
+          CRUCIAL VELOCITY-MILVERTON ON
+        </option>
+        <option value="https://geocom.leanstream.co/CFNYFM-MP3-2">
+          102.1 The EDGE TORONTO
+        </option>
+        <option value="https://playerservices.streamtheworld.com/api/livestream-redirect/CHOMFM.mp3">
+          97.7 CHOM-FM MONTREAL
+        </option>        
+	<option value="https://playerservices.streamtheworld.com/api/livestream-redirect/CHTZFM.mp3">
+          97.7 HTZ-FM St. Catharines ON
+        </option>        
+	<option value="https://nyc-edge1-entry1.leanstream-hd.com:2112/CFRQFM-MP3-2">
+          Q104 HALIFAX
+        </option>        
+	<option value="https://nyc-edge1-entry1.leanstream-hd.com:2112/CJKRFM-MP3-2">
+          POWER 97 WINNIPEG
+        </option>
+	<option value="https://cob-ais.leanstream.co/CFJBFM">
+          ROCK 95 BARRIE
+        </option>
+	<option value="https://nyc-edge1-entry1.leanstream-hd.com:2112/CKXGFM-MP3">
+          K-ROCK ST.JOHNS NL
+        </option>
+	<option value="https://nyc-edge1-entry1.leanstream-hd.com:2112/CJKRFM-MP3-2">
+          POWER 97 WINNIPEG
+        </option>
+
+	<optgroup label="EUROPE">
+        <option value="https://ais-edge83-jbmedia-nyc04.cdnstream.com/pureclassicrock">
+          CLASSIC ROCK
+        <option value="http://quincy.torontocast.com:3110/stream">
+          HAIR METAL
+        </option>
+      </optgroup>
+        <option value="https://radio21.streamabc.net/radio21-rrludwigshafen-mp3-128-3576211">
+             ROCKLAND GERMANY
+        </option>
+        <option value="https://tbfmonli.radioca.st/;">
+             HARD ROCK HELL UK
+        </option>
+        <option value="https://ais-edge83-jbmedia-nyc04.cdnstream.com/pureclassicrock">
+             CLASSIC ROCK
+        <option value="http://quincy.torontocast.com:3110/stream">
+             HAIR METAL
+        </option>
+      </optgroup>
+
+      <optgroup label="Retro">
+        <option value="https://nyc-edge1-entry1.leanstream-hd.com:2112/CJOTFM-MP3-2">
+          BOOM 99.7 OTTAWA 
+        </option>
+        <option value="https://evanov.streamb.live/SB00226">
+          LITE 92 HAMILTON
+        </option>
+        <option value="https://ais-edge66-ams02.cdnstream.com/1007_a0theoffice64k">
+          The OFFICE - SOFT HITS
+        </option>
+        <option value="https://nyc-edge1-entry1.leanstream-hd.com:2112/CKECFM-MP3">
+          94.1 The BREEZE NS
+        </option>
+      </optgroup>
+
+      <optgroup label="DIVERSE UNIVERSE">
+        <option value="https://live.citr.ca/live.aac">
+          101.9 VANCOUVER
+        </option>
+	<option value="https://hestia2.cdnstream.com/1301_128">
+          REGGAE 141 JAMAICA
+        </option>
+        <option value="https://streaming.live365.com/a57422">
+          SMOOTH JAZZ FLORIDA
+        </option>
+	<option value="https://stream2.statsradio.com/8036/stream">
+          RADIO CKJM CHETICAMP CAPE BRETON
+        </option>
+      </optgroup>
+
+    </select>
+  </div>
+
+  <div class="flex items-center gap-2 mb-2">
+    <div class="text-xs text-gray-400 w-14">Volume</div>
+    <input id="radio-volume" type="range" min="0" max="1" step="0.01" value="0.8" class="w-full">
+  </div>
+
+  <div class="text-xs text-gray-400">
+    Now playing: <span id="radio-nowplaying" class="text-gray-200">—</span>
+  </div>
+
+  <div class="text-xs text-gray-400 mt-1">
+    Status: <span id="radio-status" class="text-gray-200">Idle</span>
+  </div>
+
+  <audio id="radio-audio" preload="none" crossorigin="anonymous"></audio>
+</div>
+
+<script>
+(() => {
+  const LS_KEY = "startpage_radio_v1";
+
+  const player     = document.getElementById("radio-player");
+  const audio      = document.getElementById("radio-audio");
+  const playBtn    = document.getElementById("radio-play");
+  const stopBtn    = document.getElementById("radio-stop");
+  const prevBtn    = document.getElementById("radio-prev");
+  const nextBtn    = document.getElementById("radio-next");
+  const closeBtn   = document.getElementById("radio-close");
+  const stationSel = document.getElementById("radio-station");
+  const vol        = document.getElementById("radio-volume");
+  const statusEl   = document.getElementById("radio-status");
+  const nowEl      = document.getElementById("radio-nowplaying");
+
+  const setStatus = (msg) => statusEl.textContent = msg;
+  const setNow = (msg) => nowEl.textContent = msg || "—";
+
+  function getState() {
+    try { return JSON.parse(localStorage.getItem(LS_KEY) || "{}"); }
+    catch { return {}; }
+  }
+  function saveState(partial) {
+    const cur = getState();
+    localStorage.setItem(LS_KEY, JSON.stringify({ ...cur, ...partial }));
+  }
+
+  function updatePlayButton(isPlaying) {
+    if (isPlaying) {
+      playBtn.textContent = "⏸ Pause";
+      playBtn.classList.remove("bg-emerald-600","hover:bg-emerald-500");
+      playBtn.classList.add("bg-amber-500","hover:bg-amber-400");
+    } else {
+      playBtn.textContent = "▶ Play";
+      playBtn.classList.remove("bg-amber-500","hover:bg-amber-400");
+      playBtn.classList.add("bg-emerald-600","hover:bg-emerald-500");
+    }
+  }
+
+  function selectedStationName() {
+    const opt = stationSel.options[stationSel.selectedIndex];
+    return opt ? opt.textContent.trim() : "";
+  }
+
+  function selectIndex(i) {
+    const n = stationSel.options.length;
+    if (!n) return;
+    const idx = (i + n) % n;
+    stationSel.selectedIndex = idx;
+    saveState({ stationIndex: idx });
+    audio.src = stationSel.value;
+    setStatus("Station selected");
+    setNow("—");
+    if (!audio.paused) play();
+  }
+
+  const saved = getState();
+
+  // restore volume
+  const startVol = (typeof saved.volume === "number") ? saved.volume : 0.8;
+  vol.value = String(startVol);
+  audio.volume = startVol;
+
+  // restore station
+  if (typeof saved.stationIndex === "number" &&
+      saved.stationIndex >= 0 &&
+      saved.stationIndex < stationSel.options.length) {
+    stationSel.selectedIndex = saved.stationIndex;
+  }
+
+  // set initial source
+  audio.src = stationSel.value;
+  setStatus("Idle");
+  setNow("—");
+  updatePlayButton(false);
+
+  async function play() {
+    try {
+      if (audio.src !== stationSel.value) audio.src = stationSel.value;
+      setStatus("Connecting...");
+      setNow(selectedStationName());
+      await audio.play();
+      setStatus("Playing");
+      updatePlayButton(true);
+    } catch (e) {
+      setStatus("Blocked / failed to play");
+      updatePlayButton(false);
+      console.error(e);
+    }
+  }
+
+  function pause() {
+    audio.pause();
+    setStatus("Paused");
+    updatePlayButton(false);
+  }
+
+  function stop() {
+    audio.pause();
+    audio.currentTime = 0;
+    setStatus("Stopped");
+    setNow("—");
+    updatePlayButton(false);
+  }
+
+  // buttons
+  playBtn.addEventListener("click", () => audio.paused ? play() : pause());
+  stopBtn.addEventListener("click", stop);
+  nextBtn.addEventListener("click", () => selectIndex(stationSel.selectedIndex + 1));
+  prevBtn.addEventListener("click", () => selectIndex(stationSel.selectedIndex - 1));
+  closeBtn.addEventListener("click", () => { player.style.display = "none"; });
+
+  // dropdown
+  stationSel.addEventListener("change", () => {
+    saveState({ stationIndex: stationSel.selectedIndex });
+    audio.src = stationSel.value;
+    setStatus("Station selected");
+    setNow("—");
+    if (!audio.paused) play();
+  });
+
+  // volume
+  vol.addEventListener("input", () => {
+    const v = parseFloat(vol.value);
+    audio.volume = v;
+    saveState({ volume: v });
+  });
+
+  // keyboard shortcuts (don’t hijack typing in inputs/select)
+  document.addEventListener("keydown", (e) => {
+    const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : "";
+    if (tag === "input" || tag === "select" || tag === "textarea") return;
+
+    if (e.code === "Space") {
+      e.preventDefault();
+      audio.paused ? play() : pause();
+    }
+    if (e.code === "ArrowUp") {
+      e.preventDefault();
+      const v = Math.min(1, audio.volume + 0.05);
+      audio.volume = v;
+      vol.value = String(v);
+      saveState({ volume: v });
+    }
+    if (e.code === "ArrowDown") {
+      e.preventDefault();
+      const v = Math.max(0, audio.volume - 0.05);
+      audio.volume = v;
+      vol.value = String(v);
+      saveState({ volume: v });
+    }
+    if (e.code === "ArrowRight") {
+      e.preventDefault();
+      selectIndex(stationSel.selectedIndex + 1);
+    }
+    if (e.code === "ArrowLeft") {
+      e.preventDefault();
+      selectIndex(stationSel.selectedIndex - 1);
+    }
+  });
+
+  // audio events
+  audio.addEventListener("playing", () => { setStatus("Playing"); updatePlayButton(true); });
+  audio.addEventListener("waiting", () => setStatus("Buffering..."));
+  audio.addEventListener("stalled", () => setStatus("Stalled..."));
+  audio.addEventListener("error", () => setStatus("Stream error"));
+
+  // best-effort Media Session metadata (usually just station name)
+  if ("mediaSession" in navigator) {
+    navigator.mediaSession.metadata = new MediaMetadata({ title: selectedStationName() });
+    stationSel.addEventListener("change", () => {
+      navigator.mediaSession.metadata = new MediaMetadata({ title: selectedStationName() });
+    });
+  }
+})();
+</script>
+
+<script>
+(() => {
+  const quotes = [
+    "Do the work even when motivation ghosts you.",
+    "Consistency beats talent when talent gets lazy.",
+    "You don’t need clarity, you need movement.",
+    "Discipline is just choosing future you over now you.",
+    "Small progress every day still beats excuses.",
+    "Nobody is coming to save you—build anyway.",
+    "Focus on what moves the needle, ignore the noise.",
+    "Momentum is born from action, not planning.",
+    "Most limits are imaginary, yours included.",
+    "Stop waiting to feel ready. Ready is a lie.",
+    "The boring days are what make you dangerous.",
+    "Do something today your future self won’t hate.",
+    "You get stronger by showing up tired.",
+    "Silence the bullshit, execute the plan.",
+    "Long-term wins come from short-term discipline.",
+    "You don’t rise to motivation, you sink to habits.",
+    "Comfort is expensive—discipline is cheaper.",
+    "Progress doesn’t announce itself, it accumulates.",
+    "The grind is quiet; results make the noise.",
+    "If it was easy, everyone would finish.",
+    "Discipline is self-respect in work boots.",
+    "Action creates confidence, not the other way around.",
+    "You’re not stuck—you’re just avoiding discomfort.",
+    "Repetition is boring. Results aren’t.",
+    "Do fewer things, but do them relentlessly.",
+    "Every day you show up, you win something.",
+    "You don’t need more time, you need fewer excuses.",
+    "Build the habit before you build the dream.",
+    "The work works—if you work it.",
+    "Stay consistent long enough and it compounds."
+  ];
+
+  const el = document.getElementById("life-quote");
+  if (!el) return;
+
+  el.textContent = quotes[Math.floor(Math.random() * quotes.length)];
+})();
+</script>
+<script>
+(async () => {
+  const container = document.getElementById("daily-banner");
+  const textEl = document.getElementById("daily-banner-text");
+  if (!container || !textEl) return;
+
+  const insults = [
+    "chaos goblin",
+    "walking OSHA violation",
+    "experimental mammal",
+    "budget supervillain",
+    "carbon-based anomaly",
+    "unfinished prototype",
+    "malfunctioning adult",
+    "statistical outlier"
+  ];
+
+  const weirdKeywords = [
+    "first","invent","record","experiment","accident","explosion",
+    "launch","crash","collapse","banned","illegal","failed",
+    "largest","smallest","only","strange"
+  ];
+
+  const now = new Date();
+  const dateStr = now.toLocaleDateString("en-CA", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric"
+  });
+
+  const insult = insults[Math.floor(Math.random() * insults.length)];
+  const month = now.getMonth() + 1;
+  const day = now.getDate();
+
+  let fact = "humanity did something questionable.";
+
+  try {
+    const res = await fetch(
+      `https://en.wikipedia.org/api/rest_v1/feed/onthisday/events/${month}/${day}`
+    );
+    if (res.ok) {
+      const data = await res.json();
+      if (data.events?.length) {
+        const weird = data.events.filter(e =>
+          weirdKeywords.some(k => e.text.toLowerCase().includes(k))
+        );
+        const pool = weird.length ? weird : data.events;
+        const e = pool[Math.floor(Math.random() * pool.length)];
+        fact = `${e.year}: ${e.text}`;
+      }
+    }
+  } catch {}
+
+  const fullText = `TODAY IS ${dateStr}, YOU ${insult}. ${fact}`;
+  textEl.textContent = fullText;
+
+  // Wait 1 frame so we can measure widths correctly
+  requestAnimationFrame(() => {
+    const containerWidth = container.clientWidth;
+    const textWidth = textEl.scrollWidth;
+
+    // Reset any previous animation
+    textEl.style.animation = "none";
+    textEl.style.paddingLeft = "0";
+
+    // Only scroll if it overflows
+    if (textWidth > containerWidth) {
+      const distance = textWidth + containerWidth;
+
+      // Speed control: bigger number = slower scroll
+      const pxPerSecond = 35; // tweak later if you want
+      const duration = Math.max(18, distance / pxPerSecond);
+
+      textEl.style.paddingLeft = "100%";
+      textEl.style.animation = `banner-scroll ${duration}s linear infinite`;
+    }
+  });
+})();
+</script>
+
+
+</body>
+</html>
