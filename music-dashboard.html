@@ -6,15 +6,14 @@
   <title>Pictou Music Dashboard</title>
   <style>
     :root{
-      --bg:#0b0c0f;
-      --panel:#121422;
+      --bg:#0f172a;
+
       --panel2:rgba(0,0,0,.28);
       --text:#eef0ff;
       --muted:#a8acc8;
       --line:rgba(255,255,255,.12);
       --ring:#3b82f6;
 
-      /* fat-finger sizing */
       --radius:26px;
       --radius2:18px;
       --pad:26px;
@@ -23,52 +22,43 @@
       --btnH:128px;
       --btnFont:34px;
 
-      --controlH:88px;
-      --controlFont:26px;
-
       --clockMax:118px;
+
+      --wxIconSize: 60px;
+      --fcIconSize: 32px;
     }
 
     *{ box-sizing:border-box; }
     html,body{ height:100%; }
+
     body{
       margin:0;
       background:var(--bg);
       color:var(--text);
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      overflow:hidden;
+      overflow-y:auto;
+      overflow-x:hidden;
+      -webkit-overflow-scrolling: touch;
     }
 
     .wrap{
-      height:100%;
+      min-height: 100vh;
       display:grid;
       grid-template-columns: 1fr 460px;
       gap: var(--gap);
       padding: var(--pad);
+      padding-bottom: calc(var(--pad) + env(safe-area-inset-bottom, 0px));
     }
 
     .left{
       display:flex;
       flex-direction:column;
       gap: var(--gap);
-      padding: 22px 24px;
+      padding: 18px 24px;
       background: linear-gradient(180deg, rgba(18,20,34,.92), rgba(18,20,34,.55));
       border:1px solid var(--line);
       border-radius: var(--radius);
       min-width:0;
-    }
-
-    .clock{
-      font-weight: 950;
-      font-size: clamp(64px, 7.2vw, var(--clockMax));
-      line-height: 1.0;
-      letter-spacing: 1px;
-    }
-    .date{
-      margin-top:10px;
-      color:var(--muted);
-      font-size: clamp(20px, 2.4vw, 30px);
-      font-weight: 750;
     }
 
     .card{
@@ -78,72 +68,155 @@
       border-radius: var(--radius);
     }
 
-    /* WEATHER */
-    .wxTop{
+    /* TOP CARD */
+    .topGrid{
+      display:flex;
+      gap: 32px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+
+    .clockBlock{
+      flex: 0 0 300px;
+      min-width: 280px;
+      max-width: 380px;
+    }
+    .clock{
+      font-weight: 950;
+      font-size: clamp(52px, 5.6vw, var(--clockMax));
+      line-height: 1.0;
+      letter-spacing: 1px;
+      white-space: nowrap;
+    }
+    .date{
+      margin-top:8px;
+      color:var(--muted);
+      font-size: clamp(16px, 2.0vw, 24px);
+      font-weight: 750;
+      white-space: nowrap;
+      overflow:hidden;
+      text-overflow: ellipsis;
+    }
+
+    .wxCol{
+      flex: 1 1 440px;
+      min-width: 340px;
+      display:flex;
+      flex-direction:column;
+      gap: 10px;
+    }
+
+    .wxToday{
       display:flex;
       align-items:center;
       justify-content:space-between;
-      gap:14px;
-      flex-wrap:wrap;
+      gap: 14px;
+      min-width: 0;
+      padding: 12px 12px;
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: var(--radius2);
+      background: rgba(0,0,0,.16);
     }
+
+    /* RIGHT-ALIGN ICON + TEXT (today only) */
     .wxMain{
       display:flex;
       align-items:center;
-      gap:16px;
+      justify-content:flex-end;
+      gap: 14px;
       min-width: 0;
+      flex: 1 1 auto;
     }
+
+    .wxText{
+      flex: 1 1 auto;
+      min-width: 0;
+      text-align: right;
+    }
+
     .wxIcon{
-      font-size: 44px;
+      font-size: var(--wxIconSize);
       line-height: 1;
       flex: 0 0 auto;
       filter: drop-shadow(0 2px 6px rgba(0,0,0,.35));
+      text-align:right;
     }
+
     .wxDesc{
       font-weight: 950;
-      font-size: clamp(24px, 2.8vw, 34px);
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-      max-width: 52vw;
+      font-size: clamp(22px, 2.4vw, 32px);
+      min-width: 0;
+      white-space: normal;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      line-height: 1.15;
     }
+
     .wxTemp{
       font-weight: 950;
       font-size: clamp(30px, 3.4vw, 44px);
+      flex: 0 0 auto;
+      white-space: nowrap;
+      text-align: right;
     }
+
     .wxSub{
-      margin-top:10px;
       color: var(--muted);
       font-weight: 750;
       font-size: clamp(18px, 2.0vw, 22px);
+      line-height: 1.25;
+      text-align: right;
     }
     .wxSub strong{ color: var(--text); font-weight: 900; }
 
     /* FORECAST */
     .forecastTitle{
       display:flex;
-      justify-content:space-between;
+      justify-content:flex-end;
       align-items:baseline;
       gap:12px;
       flex-wrap:wrap;
       margin-bottom:14px;
+      min-height: 20px;
     }
-    .forecastTitle .h{
-      font-weight: 950;
-      font-size: 22px;
+
+    .tidesBox{
+      display:flex;
+      gap: 10px;
+      align-items:baseline;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+      text-align:right;
+    }
+    .tidesLabel{
+      color: var(--muted);
+      font-weight: 800;
+      font-size: 14px;
       letter-spacing: .2px;
     }
-    .forecastTitle .tiny{
-      color: var(--muted);
-      font-weight: 700;
+    .tidesText{
+      font-weight: 900;
       font-size: 16px;
+      white-space: nowrap;
+      color: var(--text);
     }
+    .tidesLink{
+      color: var(--muted);
+      font-weight: 800;
+      font-size: 14px;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
     .fcGrid{
       display:grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 14px;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
     }
     .fcDay{
-      padding: 14px 14px;
+      padding: 12px 12px;
       border: 1px solid var(--line);
       border-radius: var(--radius2);
       background: rgba(0,0,0,.22);
@@ -157,61 +230,58 @@
     }
     .fcName{
       font-weight: 950;
-      font-size: 18px;
+      font-size: 16px;
       overflow:hidden;
       text-overflow:ellipsis;
       white-space:nowrap;
     }
     .fcIcon{
-      font-size: 26px;
+      font-size: var(--fcIconSize);
       filter: drop-shadow(0 2px 6px rgba(0,0,0,.35));
     }
     .fcTemps{
       margin-top:6px;
       font-weight: 950;
-      font-size: 20px;
+      font-size: 18px;
     }
     .fcMeta{
       margin-top:6px;
       color: var(--muted);
       font-weight: 800;
-      font-size: 16px;
+      font-size: 14px;
+      line-height: 1.2;
     }
 
-    /* RADIO PLAYER */
+    /* RADIO */
     .radioBlock{
       display:flex;
       flex-direction:column;
       gap: 14px;
     }
 
-    .labelRow{
+    .statusRow{
       display:flex;
-      justify-content:space-between;
+      justify-content:flex-end;
       align-items:baseline;
       gap:10px;
       flex-wrap:wrap;
-    }
-    .labelRow label{
-      color: var(--muted);
-      font-weight: 900;
-      font-size: 18px;
-      letter-spacing: .2px;
+      min-height: 0;
     }
     .nowPlaying{
       color: var(--muted);
       font-weight: 800;
       font-size: 16px;
-      max-width: 55%;
+      max-width: 100%;
       overflow:hidden;
       text-overflow:ellipsis;
       white-space:nowrap;
       text-align:right;
+      min-height: 0;
     }
 
     select{
       width:100%;
-      height: var(--controlH);
+      height: 88px;
       font-size: 26px;
       font-weight: 850;
       padding: 0 18px;
@@ -220,10 +290,20 @@
       background: #0e1020;
       color: var(--text);
       outline: none;
+
+      scrollbar-width: auto;
+      scrollbar-color: rgba(255,255,255,.35) rgba(0,0,0,0);
     }
     select:focus{
       border-color: var(--ring);
       box-shadow: 0 0 0 6px rgba(59,130,246,.25);
+    }
+    select::-webkit-scrollbar{ width: 22px; }
+    select::-webkit-scrollbar-track{ background: rgba(0,0,0,.15); border-radius: 999px; }
+    select::-webkit-scrollbar-thumb{
+      background: rgba(255,255,255,.35);
+      border-radius: 999px;
+      border: 5px solid rgba(0,0,0,.15);
     }
 
     .controlsRow{
@@ -231,14 +311,13 @@
       grid-template-columns: 1fr 1fr;
       gap: 14px;
     }
-
     .toggleBtn{
-      height: var(--controlH);
+      height: 88px;
       border-radius: var(--radius2);
       border: 1px solid var(--line);
       background: linear-gradient(180deg, rgba(27,31,54,.96), rgba(27,31,54,.70));
       color: var(--text);
-      font-size: var(--controlFont);
+      font-size: 26px;
       font-weight: 950;
       letter-spacing: .2px;
       display:flex;
@@ -255,9 +334,7 @@
       outline: 3px solid rgba(59,130,246,.55);
       outline-offset: 2px;
     }
-    .toggleBtn.off{
-      opacity: .92;
-    }
+    .toggleBtn.off{ opacity: .92; }
 
     .volCard{
       padding: 14px 16px;
@@ -270,71 +347,187 @@
     }
     .volTop{
       display:flex;
-      justify-content:space-between;
+      justify-content:flex-end;
       align-items:center;
       gap:10px;
-    }
-    .volTop .t{
-      color: var(--muted);
-      font-weight: 950;
-      font-size: 18px;
-      letter-spacing:.2px;
     }
     .volTop .p{
       font-weight: 950;
       font-size: 18px;
+      text-align:right;
     }
 
-    /* Fat slider */
     input[type="range"]{
+      --volFill: 70%;
       width:100%;
-      height: 54px; /* gives finger room */
+      height: 54px;
       background: transparent;
       margin: 0;
       -webkit-appearance: none;
       appearance: none;
     }
     input[type="range"]::-webkit-slider-runnable-track{
-      height: 16px;
+      height: 18px;
       border-radius: 999px;
-      background: rgba(255,255,255,.18);
-      border: 1px solid rgba(255,255,255,.10);
+      border: 1px solid rgba(255,255,255,.22);
+      background: linear-gradient(
+        to right,
+        rgba(59,130,246,1) 0%,
+        rgba(59,130,246,1) var(--volFill),
+        rgba(255,255,255,.22) var(--volFill),
+        rgba(255,255,255,.22) 100%
+      );
     }
     input[type="range"]::-webkit-slider-thumb{
       -webkit-appearance: none;
       appearance: none;
-      width: 44px;
-      height: 44px;
+      width: 46px;
+      height: 46px;
       border-radius: 50%;
       background: var(--text);
       border: 2px solid rgba(0,0,0,.45);
-      margin-top: -15px; /* center thumb on track */
+      margin-top: -15px;
       box-shadow: 0 10px 22px rgba(0,0,0,.45);
     }
-    input[type="range"]:focus{
-      outline:none;
+    input[type="range"]::-moz-range-track{
+      height: 18px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.22);
+      background: rgba(255,255,255,.22);
     }
-    input[type="range"]:focus::-webkit-slider-runnable-track{
-      box-shadow: 0 0 0 6px rgba(59,130,246,.25);
-      border-color: rgba(59,130,246,.55);
+    input[type="range"]::-moz-range-progress{
+      height: 18px;
+      border-radius: 999px;
+      background: rgba(59,130,246,1);
+    }
+    input[type="range"]::-moz-range-thumb{
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      background: var(--text);
+      border: 2px solid rgba(0,0,0,.45);
+      box-shadow: 0 10px 22px rgba(0,0,0,.45);
     }
 
-    .hint{
-      color: var(--muted);
-      font-size: 15px;
-      font-weight: 650;
-      line-height: 1.35;
-    }
-
-    /* RIGHT BUTTONS */
+    /* RIGHT COLUMN + ANALOG CLOCK (no more drifting ticks) */
     .right{
       display:flex;
       flex-direction:column;
-      justify-content:center;
+      justify-content:flex-start;
       align-items:flex-end;
       gap: 18px;
       padding: 10px 0;
     }
+
+    .analogWrap{
+      width: 440px;
+      display:flex;
+      justify-content:center;
+      padding: 6px 0 2px;
+    }
+
+    .analog{
+      width: 190px;
+      height: 190px;
+      border-radius: 50%;
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(27,31,54,.96), rgba(27,31,54,.70));
+      box-shadow: 0 16px 30px rgba(0,0,0,.35);
+      position: relative;
+      user-select: none;
+      overflow: hidden; /* keep everything inside the circle */
+    }
+
+    /* minute ticks: conic-gradient = perfectly centered, always */
+    .analog::before{
+      content:"";
+      position:absolute;
+      inset: 0;
+      border-radius: 50%;
+      background:
+        conic-gradient(from -90deg,
+          rgba(255,255,255,.35) 0deg 1deg,
+          transparent 1deg 6deg
+        );
+      -webkit-mask: radial-gradient(circle at 50% 50%, transparent 0 70px, #000 71px 95px, transparent 96px);
+              mask: radial-gradient(circle at 50% 50%, transparent 0 70px, #000 71px 95px, transparent 96px);
+      opacity: .9;
+      pointer-events:none;
+    }
+
+    /* hour ticks: thicker */
+    .analog::after{
+      content:"";
+      position:absolute;
+      inset: 0;
+      border-radius: 50%;
+      background:
+        conic-gradient(from -90deg,
+          rgba(255,255,255,.60) 0deg 3deg,
+          transparent 3deg 30deg
+        );
+      -webkit-mask: radial-gradient(circle at 50% 50%, transparent 0 66px, #000 67px 95px, transparent 96px);
+              mask: radial-gradient(circle at 50% 50%, transparent 0 66px, #000 67px 95px, transparent 96px);
+      opacity: .9;
+      pointer-events:none;
+    }
+
+    .analogInner{
+      position:absolute;
+      inset: 10px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,.12);
+      pointer-events:none;
+    }
+
+    .num{
+      position:absolute;
+      left:50%;
+      top:50%;
+      transform: translate(-50%,-50%);
+      color: rgba(255,255,255,.78);
+      font-weight: 900;
+      font-size: 16px;
+      letter-spacing: .2px;
+      user-select:none;
+      pointer-events:none;
+      text-shadow: 0 6px 14px rgba(0,0,0,.45);
+    }
+
+    .hand{
+      position:absolute;
+      left:50%;
+      top:50%;
+      transform-origin: 50% 100%;
+      border-radius: 999px;
+      background: rgba(255,255,255,.90);
+      box-shadow: 0 8px 16px rgba(0,0,0,.35);
+      transform: translate(-50%,-100%) rotate(0deg);
+      z-index: 3;
+    }
+    .hand.hour{ width: 8px; height: 52px; opacity:.95; }
+    .hand.min{ width: 6px; height: 70px; opacity:.92; }
+    .hand.sec{
+      width: 3px;
+      height: 78px;
+      background: rgba(59,130,246,1);
+      box-shadow: 0 10px 18px rgba(0,0,0,.35);
+    }
+
+    .pin{
+      position:absolute;
+      left:50%;
+      top:50%;
+      width: 14px;
+      height: 14px;
+      transform: translate(-50%,-50%);
+      border-radius: 50%;
+      background: rgba(255,255,255,.95);
+      border: 2px solid rgba(0,0,0,.35);
+      box-shadow: 0 10px 18px rgba(0,0,0,.35);
+      z-index: 5;
+    }
+
     .bigBtn{
       width: 440px;
       height: var(--btnH);
@@ -357,11 +550,15 @@
     .bigBtn:hover{ filter: brightness(1.08); }
 
     @media (max-width: 980px){
-      body{ overflow:auto; }
-      .wrap{ grid-template-columns: 1fr; height:auto; }
+      .wrap{ grid-template-columns: 1fr; }
       .right{ align-items:stretch; }
+      .analogWrap{ width:100%; }
       .bigBtn{ width:100%; }
-      .wxDesc{ max-width: 70vw; }
+      .fcGrid{ grid-template-columns: repeat(2, 1fr); }
+      .tidesBox{ justify-content:flex-start; text-align:left; }
+      .clockBlock{ flex-basis: 100%; max-width:none; }
+      .wxCol{ min-width: 0; flex-basis: 100%; }
+      :root{ --wxIconSize: 54px; --fcIconSize: 30px; }
     }
   </style>
 </head>
@@ -369,35 +566,47 @@
 <body>
   <div class="wrap">
     <section class="left">
-      <div>
-        <div class="clock" id="clock">--:--</div>
-        <div class="date" id="date">---</div>
-      </div>
 
       <div class="card" aria-live="polite">
-        <div class="wxTop">
-          <div class="wxMain">
-            <div class="wxIcon" id="wxIcon">⛅</div>
-            <div class="wxDesc" id="wxDesc">Weather: loading…</div>
+        <div class="topGrid">
+          <div class="clockBlock">
+            <div class="clock" id="clock">--:--</div>
+            <div class="date" id="date">---</div>
           </div>
-          <div class="wxTemp" id="wxTemp"></div>
+
+          <div class="wxCol">
+            <div class="wxToday">
+              <div class="wxMain">
+                <div class="wxText">
+                  <div class="wxDesc" id="wxDesc">Weather: loading…</div>
+                </div>
+                <div class="wxIcon" id="wxIcon">⛅</div>
+              </div>
+              <div class="wxTemp" id="wxTemp"></div>
+            </div>
+
+            <!-- Wind removed from today; location goes here -->
+            <div class="wxSub" id="wxLine1"></div>
+            <div class="wxSub" id="wxLine2"></div>
+          </div>
         </div>
-        <div class="wxSub" id="wxLine1"></div>
-        <div class="wxSub" id="wxLine2"></div>
       </div>
 
       <div class="card">
         <div class="forecastTitle">
-          <div class="h">3-day forecast</div>
-          <div class="tiny" id="fcUpdated"></div>
+          <div class="tidesBox" id="tidesBox">
+            <span class="tidesLabel">Next high tide</span>
+            <span class="tidesText" id="tidesLine">Loading…</span>
+            <a class="tidesLink" id="tidesLink" href="https://www.tides.gc.ca/en/stations/01630" target="_blank" rel="noopener">Open table</a>
+          </div>
         </div>
+
         <div class="fcGrid" id="fcGrid"></div>
       </div>
 
       <div class="card radioBlock">
-        <div class="labelRow">
-          <label for="radioSelect">Radio streams</label>
-          <div class="nowPlaying" id="nowPlaying">Not playing</div>
+        <div class="statusRow">
+          <div class="nowPlaying" id="nowPlaying"></div>
         </div>
 
         <select id="radioSelect">
@@ -411,15 +620,9 @@
 
         <div class="volCard">
           <div class="volTop">
-            <div class="t">Volume (this page only)</div>
             <div class="p" id="volPct">70%</div>
           </div>
           <input id="vol" type="range" min="0" max="100" value="70" />
-        </div>
-
-        <div class="hint">
-          The volume slider controls the <b>radio player in this page</b> (Chrome won’t allow a webpage to change Chromebook system volume).
-          For system volume, use the Chromebook volume keys.
         </div>
 
         <audio id="audio" preload="none" crossorigin="anonymous"></audio>
@@ -427,6 +630,18 @@
     </section>
 
     <aside class="right">
+      <div class="analogWrap" aria-label="Analog clock">
+        <div class="analog" id="analog">
+          <div class="analogInner"></div>
+
+          <!-- numbers injected by JS -->
+          <div class="hand hour" id="hHand"></div>
+          <div class="hand min" id="mHand"></div>
+          <div class="hand sec" id="sHand"></div>
+          <div class="pin"></div>
+        </div>
+      </div>
+
       <a class="bigBtn" href="https://monochrome.tf/" target="_blank" rel="noopener">Monochrome.tf</a>
       <a class="bigBtn" href="https://open.spotify.com/" target="_blank" rel="noopener">Spotify</a>
       <a class="bigBtn" href="https://player.siriusxm.com/" target="_blank" rel="noopener">SiriusXM</a>
@@ -434,28 +649,35 @@
   </div>
 
   <script>
-    // =========================
-    // LOCATION: Pictou, NS (approx)
-    // =========================
     const LOCATION = { name: "Pictou, NS", lat: 45.676017, lon: -62.708861 };
 
-    // =========================
-    // RADIO STREAMS (fill later)
-    // =========================
-    // Put your fmstream.org MP3 URLs in here later.
     const RADIO_STREAMS = [
-      { name: "Example (replace me)", url: "https://example.com/stream.mp3" }
-      // { name: "Station Name", url: "https://station/stream.mp3" },
+      { name: "CRUCIAL VELOCITY", url: "https://ais-sa2.cdnstream1.com/1369_128" },
+      { name: "HARD ROCK HITS", url: "http://69.162.75.218:8704/stream" },
+      { name: "HARD ROCK VINYL", url: "https://stream.laut.fm/hardrockvinyl" },
+      { name: "TRIPLE M SYDNEY", url: "https://wz2liw.scahw.com.au/live/2hardnheavy_128.stream/playlist.m3u8" },
+      { name: "RADIO HEAD GERMANY", url: "https://stream.laut.fm/radiohead" },
+      { name: "UNDERGROUND TORONTO", url: "http://hi5.1980s.fm:8042/128k" },
+      { name: "PUNK4ALL GERMANY", url: "https://stream.laut.fm/punk4all" },
+      { name: "PUNK & DISORDERLY 80s", url: "https://stream.laut.fm/punkanddisorderly-the80s" },
+      { name: "PUNKROCK RADIO CANADA", url: "https://stream.radio.co/s904013bb1/listen" },
+      { name: "RADIO BOB HARDROCK", url: "https://streams.radiobob.de/bob-hardrock/aac-64" },
+      { name: "LABGATE ALT/GRUNGE", url: "https://s2.ssl-stream.com/radio/8190/radio.mp3" },
+      { name: "102.1 THE EDGE TORONTO", url: "https://geocom.leanstream.co/CFNYFM-MP3-2" },
+      { name: "FM96 LONDON ROCK", url: "https://nyc-edge1-entry1.leanstream-hd.com:2112/CFPLFM-MP3-2" },
+      { name: "Q104 HALIFAX", url: "https://nyc-edge1-entry1.leanstream-hd.com:2112/CFRQFM-MP3-2" },
+      { name: "BLUES RADIO ATHENS", url: "https://afterpm.eu:8443/bluesradio" },
+      { name: "YACHT ROCKIN DETROIT", url: "https://s4.radio.co/s0f3a44a66/listen" },
+      { name: "BELL BUCKLE BLUEGRASS TN", url: "https://streaming.live365.com/a26730" },
+      { name: "SKA WORLD", url: "https://stream.laut.fm/skaworld" },
+      { name: "REGGAE 141 JAMAICA", url: "https://hestia2.cdnstream.com/1301_128" },
+      { name: "FUNKY RADIO MILAN", url: "https://funkyradio.streamingmedia.it/audio.aac" }
     ];
 
-    // =========================
-    // CLOCK
-    // =========================
+    // DIGITAL CLOCK
     const clockEl = document.getElementById("clock");
     const dateEl  = document.getElementById("date");
-
     function pad(n){ return String(n).padStart(2,"0"); }
-
     function tickClock(){
       const now = new Date();
       clockEl.textContent = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
@@ -466,39 +688,59 @@
     tickClock();
     setInterval(tickClock, 1000);
 
-    // =========================
-    // WEATHER (Open-Meteo, no key)
-    // Temp + wind + POP% (today), with icons, plus 3-day forecast.
-    // =========================
+    // ANALOG CLOCK (numbers only; ticks are CSS gradients so they cannot drift)
+    const analog = document.getElementById("analog");
+    const hHand = document.getElementById("hHand");
+    const mHand = document.getElementById("mHand");
+    const sHand = document.getElementById("sHand");
+
+    (function makeNumbers(){
+      const nums = [
+        {n:"12", deg:0},
+        {n:"3", deg:90},
+        {n:"6", deg:180},
+        {n:"9", deg:270},
+      ];
+      const r = 62;
+      for(const it of nums){
+        const d = (it.deg - 90) * Math.PI/180;
+        const x = Math.cos(d) * r;
+        const y = Math.sin(d) * r;
+        const el = document.createElement("div");
+        el.className = "num";
+        el.textContent = it.n;
+        el.style.transform = `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`;
+        analog.appendChild(el);
+      }
+    })();
+
+    function tickAnalog(){
+      const d = new Date();
+      const s = d.getSeconds() + d.getMilliseconds()/1000;
+      const m = d.getMinutes() + s/60;
+      const h = (d.getHours()%12) + m/60;
+
+      sHand.style.transform = `translate(-50%,-100%) rotate(${s*6}deg)`;
+      mHand.style.transform = `translate(-50%,-100%) rotate(${m*6}deg)`;
+      hHand.style.transform = `translate(-50%,-100%) rotate(${h*30}deg)`;
+
+      requestAnimationFrame(tickAnalog);
+    }
+    requestAnimationFrame(tickAnalog);
+
+    // WEATHER
     const WX = {
-      0:{t:"Clear", i:"☀️"},
-      1:{t:"Mainly clear", i:"🌤️"},
-      2:{t:"Partly cloudy", i:"⛅"},
-      3:{t:"Overcast", i:"☁️"},
-      45:{t:"Fog", i:"🌫️"},
-      48:{t:"Rime fog", i:"🌫️"},
-      51:{t:"Light drizzle", i:"🌦️"},
-      53:{t:"Drizzle", i:"🌦️"},
-      55:{t:"Heavy drizzle", i:"🌧️"},
-      56:{t:"Freezing drizzle", i:"🌧️"},
-      57:{t:"Heavy freezing drizzle", i:"🌧️"},
-      61:{t:"Light rain", i:"🌧️"},
-      63:{t:"Rain", i:"🌧️"},
-      65:{t:"Heavy rain", i:"🌧️"},
-      66:{t:"Freezing rain", i:"🌧️"},
-      67:{t:"Heavy freezing rain", i:"🌧️"},
-      71:{t:"Light snow", i:"🌨️"},
-      73:{t:"Snow", i:"🌨️"},
-      75:{t:"Heavy snow", i:"❄️"},
+      0:{t:"Clear", i:"☀️"}, 1:{t:"Mainly clear", i:"🌤️"}, 2:{t:"Partly cloudy", i:"⛅"}, 3:{t:"Overcast", i:"☁️"},
+      45:{t:"Fog", i:"🌫️"}, 48:{t:"Rime fog", i:"🌫️"},
+      51:{t:"Light drizzle", i:"🌦️"}, 53:{t:"Drizzle", i:"🌦️"}, 55:{t:"Heavy drizzle", i:"🌧️"},
+      56:{t:"Freezing drizzle", i:"🌧️"}, 57:{t:"Heavy freezing drizzle", i:"🌧️"},
+      61:{t:"Light rain", i:"🌧️"}, 63:{t:"Rain", i:"🌧️"}, 65:{t:"Heavy rain", i:"🌧️"},
+      66:{t:"Freezing rain", i:"🌧️"}, 67:{t:"Heavy freezing rain", i:"🌧️"},
+      71:{t:"Light snow", i:"🌨️"}, 73:{t:"Snow", i:"🌨️"}, 75:{t:"Heavy snow", i:"❄️"},
       77:{t:"Snow grains", i:"🌨️"},
-      80:{t:"Showers", i:"🌦️"},
-      81:{t:"Heavy showers", i:"🌧️"},
-      82:{t:"Violent showers", i:"⛈️"},
-      85:{t:"Snow showers", i:"🌨️"},
-      86:{t:"Heavy snow showers", i:"❄️"},
-      95:{t:"Thunderstorm", i:"⛈️"},
-      96:{t:"Thunder + hail", i:"⛈️"},
-      99:{t:"Heavy hail", i:"⛈️"}
+      80:{t:"Showers", i:"🌦️"}, 81:{t:"Heavy showers", i:"🌧️"}, 82:{t:"Violent showers", i:"⛈️"},
+      85:{t:"Snow showers", i:"🌨️"}, 86:{t:"Heavy snow showers", i:"❄️"},
+      95:{t:"Thunderstorm", i:"⛈️"}, 96:{t:"Thunder + hail", i:"⛈️"}, 99:{t:"Heavy hail", i:"⛈️"}
     };
 
     const wxIconEl = document.getElementById("wxIcon");
@@ -506,13 +748,9 @@
     const wxTempEl = document.getElementById("wxTemp");
     const wxLine1  = document.getElementById("wxLine1");
     const wxLine2  = document.getElementById("wxLine2");
-
     const fcGridEl = document.getElementById("fcGrid");
-    const fcUpdatedEl = document.getElementById("fcUpdated");
 
-    function safeNum(n){
-      return (typeof n === "number" && isFinite(n)) ? n : null;
-    }
+    function safeNum(n){ return (typeof n === "number" && isFinite(n)) ? n : null; }
 
     async function fetchWeather(){
       const url =
@@ -521,7 +759,7 @@
         `&longitude=${encodeURIComponent(LOCATION.lon)}` +
         `&current=temperature_2m,wind_speed_10m,weather_code` +
         `&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,wind_speed_10m_max` +
-        `&forecast_days=3` +
+        `&forecast_days=5` +
         `&temperature_unit=celsius&wind_speed_unit=kmh&timezone=auto`;
 
       try{
@@ -537,16 +775,16 @@
         wxDescEl.textContent = w.t;
         wxTempEl.textContent = `${Math.round(c.temperature_2m)}°C`;
 
-        const wind = safeNum(c.wind_speed_10m);
-        wxLine1.innerHTML = `Wind: <strong>${wind !== null ? Math.round(wind) + " km/h" : "—"}</strong>`;
+        // TODAY: location where wind used to be
+        wxLine1.innerHTML = `<strong>${LOCATION.name}</strong>`;
 
         const popToday = safeNum(data.daily?.precipitation_probability_max?.[0]);
         const windMax = safeNum(data.daily?.wind_speed_10m_max?.[0]);
         wxLine2.innerHTML =
-          `<strong>${LOCATION.name}</strong> • POP: <strong>${popToday !== null ? Math.round(popToday) + "%" : "—"}</strong>` +
+          `POP: <strong>${popToday !== null ? Math.round(popToday) + "%" : "—"}</strong>` +
           ` • Max wind: <strong>${windMax !== null ? Math.round(windMax) + " km/h" : "—"}</strong>`;
 
-        // forecast cards
+        // forecast cards (still includes Wind: max per day)
         fcGridEl.innerHTML = "";
         const times = data.daily.time || [];
         for(let i=0;i<times.length;i++){
@@ -557,6 +795,7 @@
           const hi = Math.round(data.daily.temperature_2m_max[i]);
           const lo = Math.round(data.daily.temperature_2m_min[i]);
           const pop = safeNum(data.daily.precipitation_probability_max?.[i]);
+          const dWind = safeNum(data.daily.wind_speed_10m_max?.[i]);
 
           const card = document.createElement("div");
           card.className = "fcDay";
@@ -567,36 +806,92 @@
             </div>
             <div class="fcTemps">${hi}° / ${lo}°</div>
             <div class="fcMeta">POP: ${pop !== null ? Math.round(pop) + "%" : "—"}</div>
+            <div class="fcMeta">Wind: ${dWind !== null ? Math.round(dWind) + " km/h" : "—"}</div>
           `;
           fcGridEl.appendChild(card);
         }
-
-        const upd = data.current?.time ? new Date(data.current.time) : null;
-        fcUpdatedEl.textContent = upd
-          ? `Updated ${new Intl.DateTimeFormat(undefined,{hour:"numeric",minute:"2-digit"}).format(upd)}`
-          : "";
 
       }catch(e){
         wxIconEl.textContent = "⚠️";
         wxDescEl.textContent = "Weather unavailable";
         wxTempEl.textContent = "";
-        wxLine1.textContent = "Network blocked the weather request.";
-        wxLine2.textContent = LOCATION.name;
+        wxLine1.textContent = LOCATION.name;
+        wxLine2.textContent = "";
         fcGridEl.innerHTML = "";
-        fcUpdatedEl.textContent = "";
       }
     }
 
     fetchWeather();
     setInterval(fetchWeather, 15 * 60 * 1000);
 
-    // =========================
-    // RADIO PLAYER (fat-finger)
-    // - Dropdown loads station (no autoplay)
-    // - Big Play/Pause toggle button
-    // - Big Stop button
-    // - Fat volume slider
-    // =========================
+    // TIDES (auto-hide if unavailable)
+    const tidesBoxEl  = document.getElementById("tidesBox");
+    const tidesLineEl = document.getElementById("tidesLine");
+    const tidesLinkEl = document.getElementById("tidesLink");
+
+    const IWLS_BASE = "https://api-iwls.dfo-mpo.gc.ca";
+    const TIDE_STATION_CODE = "01630";
+    tidesLinkEl.href = `https://www.tides.gc.ca/en/stations/${TIDE_STATION_CODE}`;
+
+    function fmtTimeLocal(d){
+      return new Intl.DateTimeFormat(undefined, { hour:"numeric", minute:"2-digit" }).format(d);
+    }
+    function isoZ(d){ return d.toISOString().replace(/\.\d{3}Z$/, "Z"); }
+
+    function findNextHigh(series){
+      const now = Date.now();
+      for(let i=1; i<series.length-1; i++){
+        const t = Date.parse(series[i].eventDate);
+        if(!isFinite(t) || t <= now) continue;
+        const prev = series[i-1].value;
+        const cur  = series[i].value;
+        const next = series[i+1].value;
+        if(typeof prev !== "number" || typeof cur !== "number" || typeof next !== "number") continue;
+        if(cur > prev && cur > next) return new Date(t);
+      }
+      return null;
+    }
+
+    async function fetchNextHighTide(){
+      try{
+        tidesLineEl.textContent = "Loading…";
+        tidesBoxEl.style.display = "";
+
+        const stRes = await fetch(`${IWLS_BASE}/api/v1/stations?code=${encodeURIComponent(TIDE_STATION_CODE)}`, { cache:"no-store" });
+        if(!stRes.ok) throw new Error("station fetch failed");
+        const st = await stRes.json();
+        const stationId = Array.isArray(st) && st[0]?.id ? st[0].id : null;
+        if(!stationId) throw new Error("no station id");
+
+        const now = new Date();
+        const from = new Date(now.getTime() - 12 * 60 * 60 * 1000);
+        const to   = new Date(now.getTime() + 48 * 60 * 60 * 1000);
+
+        const dataUrl =
+          `${IWLS_BASE}/api/v1/stations/${encodeURIComponent(stationId)}/data` +
+          `?time-series-code=wlp` +
+          `&from=${encodeURIComponent(isoZ(from))}` +
+          `&to=${encodeURIComponent(isoZ(to))}` +
+          `&resolution=60`;
+
+        const dRes = await fetch(dataUrl, { cache:"no-store" });
+        if(!dRes.ok) throw new Error("tide data fetch failed");
+        const series = await dRes.json();
+        if(!Array.isArray(series) || series.length < 5) throw new Error("not enough tide data");
+
+        const nextHigh = findNextHigh(series);
+        if(!nextHigh) throw new Error("no next high");
+
+        tidesLineEl.textContent = fmtTimeLocal(nextHigh);
+      }catch(e){
+        tidesBoxEl.style.display = "none";
+      }
+    }
+
+    fetchNextHighTide();
+    setInterval(fetchNextHighTide, 30 * 60 * 1000);
+
+    // RADIO PLAYER + BEST-EFFORT SONG TITLE (blank unless we find a title)
     const sel = document.getElementById("radioSelect");
     const audio = document.getElementById("audio");
     const toggleBtn = document.getElementById("toggleBtn");
@@ -605,8 +900,7 @@
     const volPct = document.getElementById("volPct");
     const nowPlaying = document.getElementById("nowPlaying");
 
-    let currentStationName = "";
-    let loadedUrl = "";
+    let metaStop = null;
 
     function setToggleState(isPlaying){
       if(isPlaying){
@@ -620,19 +914,19 @@
       }
     }
 
-    function setNowPlaying(text){
-      nowPlaying.textContent = text;
+    function setNowPlayingText(text){
+      nowPlaying.textContent = (text || "").trim();
     }
 
     function setVol(v){
       const n = Math.max(0, Math.min(100, Number(v)));
-      audio.volume = n / 100;     // page/tab volume only
+      audio.volume = n / 100;
       vol.value = String(n);
       volPct.textContent = `${n}%`;
+      vol.style.setProperty("--volFill", `${n}%`);
     }
     setVol(70);
 
-    // Populate dropdown
     for(const s of RADIO_STREAMS){
       const opt = document.createElement("option");
       opt.value = s.url;
@@ -640,20 +934,91 @@
       sel.appendChild(opt);
     }
 
-    // >>> IMPORTANT: dropdown LOADS ONLY, DOES NOT AUTOPLAY <<<
+    function stopIcyMeta(){
+      if(metaStop){
+        try{ metaStop(); }catch(e){}
+        metaStop = null;
+      }
+    }
+
+    function startIcyMeta(url){
+      stopIcyMeta();
+
+      const controller = new AbortController();
+      metaStop = () => controller.abort();
+
+      (async () => {
+        try{
+          const res = await fetch(url, {
+            method: "GET",
+            mode: "cors",
+            cache: "no-store",
+            headers: { "Icy-MetaData": "1" },
+            signal: controller.signal
+          });
+
+          const metaIntStr = res.headers.get("icy-metaint");
+          const metaInt = metaIntStr ? Number(metaIntStr) : NaN;
+          if(!isFinite(metaInt) || metaInt <= 0) throw new Error("No icy-metaint");
+
+          const reader = res.body.getReader();
+          let bytesUntilMeta = metaInt;
+          let lastTitle = "";
+
+          while(true){
+            const {value, done} = await reader.read();
+            if(done) break;
+            if(!value) continue;
+
+            let i = 0;
+            while(i < value.length){
+              const take = Math.min(bytesUntilMeta, value.length - i);
+              i += take;
+              bytesUntilMeta -= take;
+
+              if(bytesUntilMeta === 0){
+                if(i >= value.length) break;
+
+                const metaLen = value[i] * 16;
+                i += 1;
+
+                if(metaLen > 0){
+                  if(i + metaLen > value.length){
+                    i = value.length;
+                  }else{
+                    const metaBytes = value.slice(i, i + metaLen);
+                    i += metaLen;
+
+                    const metaStr = new TextDecoder("utf-8").decode(metaBytes);
+                    const m = /StreamTitle='([^']*)';/i.exec(metaStr);
+                    const title = (m && m[1]) ? m[1].trim() : "";
+
+                    if(title && title !== lastTitle){
+                      lastTitle = title;
+                      setNowPlayingText(title);
+                    }
+                  }
+                }
+                bytesUntilMeta = metaInt;
+              }
+            }
+          }
+        }catch(e){
+          // silent fallback (blank)
+        }
+      })();
+    }
+
     sel.addEventListener("change", () => {
+      stopIcyMeta();
+      setNowPlayingText("");
+
       if(!sel.value){
-        loadedUrl = "";
-        currentStationName = "";
         audio.removeAttribute("src");
-        setNowPlaying("Not playing");
         setToggleState(false);
         return;
       }
-      loadedUrl = sel.value;
-      currentStationName = sel.options[sel.selectedIndex].textContent || "Station";
-      audio.src = loadedUrl; // load only
-      setNowPlaying(`Loaded: ${currentStationName}`);
+      audio.src = sel.value;
       setToggleState(false);
     });
 
@@ -662,47 +1027,42 @@
         alert("Pick a station first.");
         return;
       }
+
       if(audio.paused){
         try{
           await audio.play();
-          setNowPlaying(`Playing: ${currentStationName || "Station"}`);
           setToggleState(true);
+          setNowPlayingText("");
+          startIcyMeta(audio.src);
         }catch(err){
-          alert("This stream refused to play. Try a different MP3 stream URL.");
-          setNowPlaying("Not playing");
+          alert("This stream refused to play. (Some HTTP streams get blocked, and some .m3u8 streams won’t play.)");
           setToggleState(false);
+          stopIcyMeta();
+          setNowPlayingText("");
         }
       }else{
         audio.pause();
-        setNowPlaying(`Paused: ${currentStationName || "Station"}`);
         setToggleState(false);
+        stopIcyMeta();
+        setNowPlayingText("");
       }
     });
 
     stopBtn.addEventListener("click", () => {
       audio.pause();
-      audio.currentTime = 0;
-      setNowPlaying(audio.src ? `Loaded: ${currentStationName || "Station"}` : "Not playing");
+      try { audio.currentTime = 0; } catch(e) {}
       setToggleState(false);
+      stopIcyMeta();
+      setNowPlayingText("");
     });
 
     vol.addEventListener("input", () => setVol(vol.value));
+    audio.addEventListener("ended", () => { stopIcyMeta(); setNowPlayingText(""); setToggleState(false); });
+    audio.addEventListener("error", () => { stopIcyMeta(); setNowPlayingText(""); setToggleState(false); });
 
-    // Keep UI in sync if playback changes outside buttons
-    audio.addEventListener("play", () => setToggleState(true));
-    audio.addEventListener("pause", () => setToggleState(false));
-    audio.addEventListener("ended", () => {
-      setNowPlaying(audio.src ? `Loaded: ${currentStationName || "Station"}` : "Not playing");
-      setToggleState(false);
-    });
-    audio.addEventListener("error", () => {
-      setNowPlaying("Error loading stream");
-      setToggleState(false);
-    });
-
-    // Start state
-    setNowPlaying("Not playing");
+    setNowPlayingText("");
     setToggleState(false);
   </script>
 </body>
 </html>
+
