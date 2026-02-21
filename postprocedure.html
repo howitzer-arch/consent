@@ -6,469 +6,251 @@
 <title>Post Procedure</title>
 
 <style>
-  html, body {
-    height: 100%;
-    margin: 0;
-    background: #fff;
-    overflow: hidden;
-    font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-  }
+html, body {
+  height:100%;
+  margin:0;
+  background:#fff;
+  overflow:hidden;
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+}
 
-  .frame-window {
-    position: fixed;
-    inset: 0;
-    overflow: hidden;
-    background: #fff;
-  }
+.frame-window{
+  position:fixed;
+  inset:0;
+  overflow:hidden;
+  background:#fff;
+}
 
-  /* iframe: no transforms (keeps iOS scrolling happy) */
-  iframe {
-    position: absolute;
-    top: 0;
-    left: 0;
+iframe{
+  position:absolute;
+  top:0;
+  left:0;
+  width:100%;
+  border:0;
+  display:block;
+  transform:none!important;
+  -webkit-overflow-scrolling:touch;
+}
 
-    width: 100%;
-    border: 0;
-    display: block;
+/* BLACK SAFETY BAR (NO TEXT) */
+#bottomBar{
+  position:fixed;
+  left:0;
+  right:0;
+  bottom:0;
+  height:0px;        /* controlled by JS */
+  background:#000;
+  z-index:80;
+  pointer-events:none; /* does NOT block submit button */
+}
 
-    transform: none !important;
-    -webkit-overflow-scrolling: touch;
-  }
+/* ADMIN PANEL */
+.controls{
+  position:fixed;
+  left:0;right:0;top:0;
+  padding:10px 12px;
+  background:rgba(255,255,255,0.94);
+  border-bottom:1px solid rgba(0,0,0,0.12);
+  backdrop-filter:blur(10px);
+  z-index:90;
+}
+.controls.hidden{display:none;}
 
-  /* BLACK DATE BAR (visual only — DOES NOT BLOCK CLICKS) */
-  #bottomBar {
-    position: fixed;
-    left: 0;
-    right: 0;
-    bottom: 0;
+.row{display:flex;align-items:center;gap:10px;margin:8px 0;}
+.row label{width:170px;font-size:14px;}
+.row input[type="range"]{flex:1;}
+.val{width:80px;text-align:right;font-variant-numeric:tabular-nums;}
 
-    height: 0px;            /* controlled by JS */
-    background: #000;
-    color: #fff;
+.pill{
+  display:inline-block;
+  padding:2px 8px;
+  border:1px solid rgba(0,0,0,0.15);
+  border-radius:999px;
+  font-size:12px;
+  opacity:.85;
+  margin-left:6px;
+}
 
-    z-index: 80;            /* above iframe */
-    pointer-events: none;   /* <-- IMPORTANT: don't block submit button */
+.hint{font-size:12px;opacity:.75;margin-top:6px;line-height:1.25;}
+.btnrow{display:flex;gap:10px;flex-wrap:wrap;}
 
-    display: flex;
-    align-items: center;
-    justify-content: center;
+.btn{
+  border:1px solid rgba(0,0,0,0.18);
+  background:rgba(0,0,0,0.06);
+  padding:8px 10px;
+  border-radius:10px;
+  font-size:14px;
+}
 
-    font-size: 22px;        /* large */
-    font-weight: 800;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-  }
+#adminBtn{
+  position:fixed;
+  top:10px;
+  right:10px;
+  width:44px;
+  height:44px;
+  border-radius:999px;
+  border:none;
+  background:rgba(0,0,0,0.15);
+  color:#000;
+  font-size:20px;
+  z-index:100;
+  backdrop-filter:blur(6px);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+#adminBtn.hidden{display:none;}
 
-  /* Admin controls panel */
-  .controls {
-    position: fixed;
-    left: 0; right: 0; top: 0;
-    padding: 10px 12px;
-    background: rgba(255,255,255,0.94);
-    border-bottom: 1px solid rgba(0,0,0,0.12);
-    backdrop-filter: blur(10px);
-    z-index: 90;
-  }
-  .controls.hidden { display: none; }
+#exitScreen{
+  position:fixed;
+  inset:0;
+  background:#fff;
+  z-index:200;
+  display:none;
+  padding:16px;
+}
+#exitScreen.show{display:block;}
 
-  .row { display:flex; align-items:center; gap:10px; margin: 8px 0; }
-  .row label { width: 170px; font-size: 14px; }
-  .row input[type="range"] { flex: 1; }
-  .val { width: 80px; text-align:right; font-variant-numeric: tabular-nums; }
+.bigbtn{
+  display:inline-block;
+  padding:12px 14px;
+  border-radius:12px;
+  border:1px solid rgba(0,0,0,0.18);
+  background:rgba(0,0,0,0.06);
+  font-size:16px;
+}
 
-  .pill {
-    display:inline-block;
-    padding: 2px 8px;
-    border: 1px solid rgba(0,0,0,0.15);
-    border-radius: 999px;
-    font-size: 12px;
-    opacity: 0.85;
-    margin-left: 6px;
-  }
-
-  .hint {
-    font-size: 12px;
-    opacity: 0.75;
-    margin-top: 6px;
-    line-height: 1.25;
-  }
-
-  .btnrow { display:flex; gap:10px; flex-wrap: wrap; }
-  .btn {
-    border: 1px solid rgba(0,0,0,0.18);
-    background: rgba(0,0,0,0.06);
-    padding: 8px 10px;
-    border-radius: 10px;
-    font-size: 14px;
-  }
-
-  /* Admin button */
-  #adminBtn {
-    position: fixed;
-    top: 10px;
-    right: 10px;
-    width: 44px;
-    height: 44px;
-    border-radius: 999px;
-    border: none;
-    background: rgba(0,0,0,0.15);
-    color: #000;
-    font-size: 20px;
-    z-index: 100;
-    backdrop-filter: blur(6px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  #adminBtn.hidden { display: none; }
-
-  /* Simple exit overlay screen */
-  #exitScreen {
-    position: fixed;
-    inset: 0;
-    background: #fff;
-    z-index: 200;
-    display: none;
-    padding: 16px;
-  }
-  #exitScreen.show { display: block; }
-  #exitScreen h1 { margin: 0 0 10px 0; font-size: 20px; }
-  #exitScreen p { margin: 0 0 14px 0; opacity: 0.8; }
-  #exitScreen .bigbtn {
-    display: inline-block;
-    padding: 12px 14px;
-    border-radius: 12px;
-    border: 1px solid rgba(0,0,0,0.18);
-    background: rgba(0,0,0,0.06);
-    font-size: 16px;
-  }
-
-  .noselect { user-select: none; -webkit-user-select: none; }
+.noselect{user-select:none;-webkit-user-select:none;}
 </style>
 </head>
 
 <body class="noselect">
 
-<button id="adminBtn" aria-label="Admin settings">⚙</button>
+<button id="adminBtn">⚙</button>
 
 <div class="controls hidden" id="controls">
   <div class="row">
     <label>Mode <span class="pill" id="modePill">normal</span></label>
-    <div class="hint" style="margin:0">
-      Set “Hide bottom” until the blue bar is gone, then scroll and confirm Submit is tappable.
-    </div>
   </div>
 
   <div class="row">
-    <label for="maskNormal">Hide bottom (normal)</label>
-    <input id="maskNormal" type="range" min="0" max="260" step="2" />
+    <label>Hide bottom (normal)</label>
+    <input id="maskNormal" type="range" min="0" max="260" step="2"/>
     <div class="val" id="maskNormalVal"></div>
   </div>
 
   <div class="row">
-    <label for="maskKeyboard">Hide bottom (keyboard)</label>
-    <input id="maskKeyboard" type="range" min="0" max="380" step="2" />
+    <label>Hide bottom (keyboard)</label>
+    <input id="maskKeyboard" type="range" min="0" max="380" step="2"/>
     <div class="val" id="maskKeyboardVal"></div>
   </div>
 
   <div class="row">
-    <label for="nudgePx">Nudge up/down</label>
-    <input id="nudgePx" type="range" min="-200" max="200" step="2" />
+    <label>Nudge up/down</label>
+    <input id="nudgePx" type="range" min="-200" max="200" step="2"/>
     <div class="val" id="nudgeVal"></div>
   </div>
 
-  <div class="row">
-    <label for="restrictedToggle">Restricted mode</label>
-    <input id="restrictedToggle" type="checkbox" />
-    <div class="hint" style="margin:0">Locks back button + tightens iframe sandbox.</div>
-  </div>
-
   <div class="btnrow">
-    <button class="btn" id="btnLock">Lock now</button>
-    <button class="btn" id="btnUnlock">Unlock (allow back)</button>
-    <button class="btn" id="btnExit">Exit screen</button>
     <button class="btn" id="btnReload">Reload page</button>
-  </div>
-
-  <div class="hint">
-    Secret admin recovery: tap top-right corner 5 times to show the gear.
-    Emergency exit: 3-finger long-press anywhere (~1s) to show exit screen.
   </div>
 </div>
 
 <div class="frame-window">
   <iframe id="formFrame"
     src="https://www.howitzer.ink/postprocedure.html"
-    scrolling="yes"
-    referrerpolicy="no-referrer-when-downgrade"
-    allow="clipboard-read; clipboard-write"
-  ></iframe>
+    scrolling="yes"></iframe>
 </div>
 
-<div id="bottomBar">
-  <span id="todayDate"></span>
-</div>
+<div id="bottomBar"></div>
 
 <div id="exitScreen">
   <h1>Admin exit</h1>
-  <p>Restricted mode is off here. You can close the browser/tab/app or reopen the page.</p>
   <button class="bigbtn" id="btnReturn">Return</button>
 </div>
 
 <script>
-  const PAGE_URL = "https://www.howitzer.ink/postprocedure.html";
+const PAGE_URL="https://www.howitzer.ink/postprocedure.html";
+const EXTRA_SCROLL_PX=280;
 
-  // More scroll runway so the Submit button can rise ABOVE the clipped zone.
-  // If you ever clip more aggressively, this still keeps Submit reachable.
-  const EXTRA_SCROLL_PX = 280;
+const frame=document.getElementById('formFrame');
+const bottomBar=document.getElementById('bottomBar');
 
-  const frame = document.getElementById('formFrame');
-  const controls = document.getElementById('controls');
-  const modePill = document.getElementById('modePill');
+const maskNormal=document.getElementById('maskNormal');
+const maskKeyboard=document.getElementById('maskKeyboard');
+const nudgePx=document.getElementById('nudgePx');
 
-  const maskNormal = document.getElementById('maskNormal');
-  const maskKeyboard = document.getElementById('maskKeyboard');
-  const nudgePx = document.getElementById('nudgePx');
+const maskNormalVal=document.getElementById('maskNormalVal');
+const maskKeyboardVal=document.getElementById('maskKeyboardVal');
+const nudgeVal=document.getElementById('nudgeVal');
+const modePill=document.getElementById('modePill');
 
-  const maskNormalVal = document.getElementById('maskNormalVal');
-  const maskKeyboardVal = document.getElementById('maskKeyboardVal');
-  const nudgeVal = document.getElementById('nudgeVal');
+const savedMaskNormal=parseInt(localStorage.getItem('maskBottomNormalPx')||'90',10);
+const savedMaskKeyboard=parseInt(localStorage.getItem('maskBottomKeyboardPx')||'130',10);
+const savedNudge=parseInt(localStorage.getItem('nudgeUpPx')||'0',10);
 
-  const restrictedToggle = document.getElementById('restrictedToggle');
+maskNormal.value=savedMaskNormal;
+maskKeyboard.value=savedMaskKeyboard;
+nudgePx.value=savedNudge;
 
-  const adminBtn = document.getElementById('adminBtn');
-  const btnLock = document.getElementById('btnLock');
-  const btnUnlock = document.getElementById('btnUnlock');
-  const btnExit = document.getElementById('btnExit');
-  const btnReload = document.getElementById('btnReload');
+/* keyboard detection */
+let keyboardUp=false;
+let baselineHeight=null;
 
-  const exitScreen = document.getElementById('exitScreen');
-  const btnReturn = document.getElementById('btnReturn');
+function getViewportHeight(){
+  return(window.visualViewport&&window.visualViewport.height)
+    ?window.visualViewport.height
+    :window.innerHeight;
+}
 
-  const todayDateEl = document.getElementById('todayDate');
-  const bottomBar = document.getElementById('bottomBar');
+function updateKeyboardState(){
+  const h=getViewportHeight();
+  if(baselineHeight===null)baselineHeight=h;
+  const shrink=baselineHeight-h;
+  keyboardUp=shrink>120;
+}
 
-  // ---- Date in ALL CAPS ----
-  function updateTodayDate() {
-    const now = new Date();
-    const formatted = now.toLocaleDateString(undefined, {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-    todayDateEl.textContent = formatted.toUpperCase();
-  }
-  updateTodayDate();
+/* APPLY CLIP */
+function applyClipAndSave(){
+  updateKeyboardState();
 
-  // ----- Persistent settings -----
-  const savedMaskNormal = parseInt(localStorage.getItem('maskBottomNormalPx') || '90', 10);
-  const savedMaskKeyboard = parseInt(localStorage.getItem('maskBottomKeyboardPx') || '130', 10);
-  const savedNudge = parseInt(localStorage.getItem('nudgeUpPx') || '0', 10);
-  const savedRestricted = (localStorage.getItem('restrictedMode') || 'true') === 'true';
+  const cutPx=keyboardUp?parseInt(maskKeyboard.value,10):parseInt(maskNormal.value,10);
+  const n=parseInt(nudgePx.value,10);
 
-  maskNormal.value = savedMaskNormal;
-  maskKeyboard.value = savedMaskKeyboard;
-  nudgePx.value = savedNudge;
-  restrictedToggle.checked = savedRestricted;
+  frame.style.clipPath=`inset(0px 0px ${cutPx}px 0px)`;
+  frame.style.webkitClipPath=`inset(0px 0px ${cutPx}px 0px)`;
+  frame.style.top=`${n}px`;
 
-  // ----- Keyboard detection via viewport shrink -----
-  let keyboardUp = false;
-  let baselineHeight = null;
+  frame.style.height=`calc(100% + ${cutPx+EXTRA_SCROLL_PX}px)`;
 
-  function getViewportHeight() {
-    return (window.visualViewport && window.visualViewport.height)
-      ? window.visualViewport.height
-      : window.innerHeight;
-  }
+  bottomBar.style.height=`${cutPx}px`;
 
-  function updateKeyboardState() {
-    const h = getViewportHeight();
-    if (baselineHeight === null) baselineHeight = h;
+  maskNormalVal.textContent=`${maskNormal.value}px`;
+  maskKeyboardVal.textContent=`${maskKeyboard.value}px`;
+  nudgeVal.textContent=`${n}px`;
 
-    const shrink = baselineHeight - h;
-    keyboardUp = shrink > 120;
+  modePill.textContent=keyboardUp?'keyboard':'normal';
 
-    // Reset baseline on meaningful non-keyboard resizes
-    if (!keyboardUp && Math.abs(h - baselineHeight) > 80) {
-      baselineHeight = h;
-    }
-  }
+  localStorage.setItem('maskBottomNormalPx',maskNormal.value);
+  localStorage.setItem('maskBottomKeyboardPx',maskKeyboard.value);
+  localStorage.setItem('nudgeUpPx',n);
+}
 
-  // ----- Restricted mode (history lock + iframe sandbox) -----
-  let locked = false;
+maskNormal.addEventListener('input',applyClipAndSave);
+maskKeyboard.addEventListener('input',applyClipAndSave);
+nudgePx.addEventListener('input',applyClipAndSave);
 
-  function setLocked(on) {
-    locked = !!on;
-    localStorage.setItem('historyLocked', locked ? 'true' : 'false');
+window.addEventListener('resize',applyClipAndSave);
+if(window.visualViewport){
+  window.visualViewport.addEventListener('resize',applyClipAndSave);
+  window.visualViewport.addEventListener('scroll',applyClipAndSave);
+}
 
-    if (locked) {
-      try { history.pushState({kiosk: true}, "", location.href); } catch (e) {}
-    }
-  }
-
-  window.addEventListener('popstate', () => {
-    if (locked) {
-      try { history.pushState({kiosk: true}, "", location.href); } catch (err) {}
-    }
-  });
-
-  function applySandbox(restrictedOn) {
-    if (restrictedOn) {
-      frame.setAttribute('sandbox', 'allow-forms allow-scripts allow-same-origin');
-    } else {
-      frame.removeAttribute('sandbox');
-    }
-  }
-
-  function setRestricted(on) {
-    const isOn = !!on;
-    restrictedToggle.checked = isOn;
-    localStorage.setItem('restrictedMode', isOn ? 'true' : 'false');
-
-    applySandbox(isOn);
-    setLocked(isOn);
-  }
-
-  // ----- Apply clip + nudge + save -----
-  function applyClipAndSave() {
-    updateKeyboardState();
-
-    const cutPx = keyboardUp ? parseInt(maskKeyboard.value, 10) : parseInt(maskNormal.value, 10);
-    const n = parseInt(nudgePx.value, 10);
-
-    // Clip the visible iframe viewport (hides fixed/sticky bottom bars)
-    frame.style.clipPath = `inset(0px 0px ${cutPx}px 0px)`;
-    frame.style.webkitClipPath = `inset(0px 0px ${cutPx}px 0px)`;
-
-    // Nudge without transform
-    frame.style.top = `${n}px`;
-
-    // Extra height = extra scroll runway so Submit can scroll above the clipped zone
-    frame.style.height = `calc(100% + ${cutPx + EXTRA_SCROLL_PX}px)`;
-
-    // Visual bar height matches the cut
-    bottomBar.style.height = `${cutPx}px`;
-
-    maskNormalVal.textContent = `${parseInt(maskNormal.value,10)}px`;
-    maskKeyboardVal.textContent = `${parseInt(maskKeyboard.value,10)}px`;
-    nudgeVal.textContent = `${n}px`;
-
-    modePill.textContent = keyboardUp ? 'keyboard' : 'normal';
-
-    localStorage.setItem('maskBottomNormalPx', parseInt(maskNormal.value,10));
-    localStorage.setItem('maskBottomKeyboardPx', parseInt(maskKeyboard.value,10));
-    localStorage.setItem('nudgeUpPx', n);
-  }
-
-  maskNormal.addEventListener('input', applyClipAndSave);
-  maskKeyboard.addEventListener('input', applyClipAndSave);
-  nudgePx.addEventListener('input', applyClipAndSave);
-
-  // ----- Admin UI behavior -----
-  let hideAdminTimer = null;
-  let hideControlsTimer = null;
-
-  function showAdminBtnFor(ms) {
-    adminBtn.classList.remove('hidden');
-    if (hideAdminTimer) clearTimeout(hideAdminTimer);
-    hideAdminTimer = setTimeout(() => adminBtn.classList.add('hidden'), ms);
-  }
-
-  function showControlsFor(ms) {
-    controls.classList.remove('hidden');
-    adminBtn.classList.add('hidden');
-
-    if (hideControlsTimer) clearTimeout(hideControlsTimer);
-    hideControlsTimer = setTimeout(() => {
-      controls.classList.add('hidden');
-      showAdminBtnFor(3000);
-    }, ms);
-  }
-
-  adminBtn.addEventListener('click', () => showControlsFor(10000));
-  showAdminBtnFor(3500);
-
-  // Secret fallback: tap top-right corner 5 times
-  let cornerTaps = 0;
-  let cornerTapTimer = null;
-
-  function registerCornerTap(x, y) {
-    const w = window.innerWidth;
-    const h = window.innerHeight;
-    const inTopRight = (x > w * 0.80) && (y < h * 0.25);
-    if (!inTopRight) return;
-
-    cornerTaps += 1;
-    if (cornerTapTimer) clearTimeout(cornerTapTimer);
-    cornerTapTimer = setTimeout(() => { cornerTaps = 0; }, 1200);
-
-    if (cornerTaps >= 5) {
-      cornerTaps = 0;
-      showAdminBtnFor(6000);
-    }
-  }
-
-  document.addEventListener('touchstart', (e) => {
-    if (!e.touches || !e.touches[0]) return;
-    registerCornerTap(e.touches[0].clientX, e.touches[0].clientY);
-  }, {passive:true});
-
-  document.addEventListener('mousedown', (e) => registerCornerTap(e.clientX, e.clientY));
-
-  // Emergency exit: 3-finger long-press (~1s)
-  let emergencyTimer = null;
-
-  document.addEventListener('touchstart', (e) => {
-    if (e.touches && e.touches.length >= 3) {
-      emergencyTimer = setTimeout(() => {
-        setRestricted(false);
-        controls.classList.add('hidden');
-        adminBtn.classList.add('hidden');
-        exitScreen.classList.add('show');
-      }, 900);
-    }
-  }, {passive:true});
-
-  document.addEventListener('touchend', () => {
-    if (emergencyTimer) clearTimeout(emergencyTimer);
-    emergencyTimer = null;
-  }, {passive:true});
-
-  // ----- Restricted toggle + lock/unlock buttons -----
-  restrictedToggle.addEventListener('change', () => setRestricted(restrictedToggle.checked));
-
-  btnLock.addEventListener('click', () => setRestricted(true));
-  btnUnlock.addEventListener('click', () => setRestricted(false));
-
-  btnReload.addEventListener('click', () => {
-    frame.src = PAGE_URL + (PAGE_URL.includes('?') ? '&' : '?') + 'r=' + Date.now();
-    applyClipAndSave();
-  });
-
-  btnExit.addEventListener('click', () => {
-    setRestricted(false);
-    controls.classList.add('hidden');
-    adminBtn.classList.add('hidden');
-    exitScreen.classList.add('show');
-  });
-
-  btnReturn.addEventListener('click', () => {
-    exitScreen.classList.remove('show');
-    showAdminBtnFor(6000);
-  });
-
-  // Watch viewport changes
-  window.addEventListener('resize', applyClipAndSave);
-  if (window.visualViewport) {
-    window.visualViewport.addEventListener('resize', applyClipAndSave);
-    window.visualViewport.addEventListener('scroll', applyClipAndSave);
-  }
-
-  // Initial apply
-  applyClipAndSave();
-  setRestricted(savedRestricted);
+applyClipAndSave();
 </script>
+
+</body>
+</html>
 
 </body>
 </html>
