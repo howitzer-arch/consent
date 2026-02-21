@@ -20,18 +20,14 @@
     background: #fff;
   }
 
-  /* IMPORTANT:
-     - No transform on iframe (breaks scroll on iOS sometimes)
-     - Use clip-path to hide bottom bar (even if it's position:fixed)
-  */
   iframe {
     position: absolute;
     top: 0;
     left: 0;
 
     width: 100%;
-    height: 100%;
 
+    /* height is set in JS */
     border: 0;
     display: block;
 
@@ -39,21 +35,18 @@
     -webkit-overflow-scrolling: touch;
   }
 
-  /* Touch-blocker for the clipped area (optional but helpful):
-     If the bar has click targets right at the bottom, this blocks taps there.
-  */
+  /* Blocks taps in the clipped zone so no accidental clicks */
   #bottomBlocker {
     position: fixed;
     left: 0;
     right: 0;
     bottom: 0;
-    height: 0px;        /* controlled by slider */
-    background: transparent;
+    height: 0px;        /* controlled by JS */
+    background: #fff;   /* white bar */
     z-index: 80;        /* ABOVE iframe */
     pointer-events: auto;
   }
 
-  /* Admin controls panel */
   .controls {
     position: fixed;
     left: 0; right: 0; top: 0;
@@ -80,13 +73,7 @@
     margin-left: 6px;
   }
 
-  .hint {
-    font-size: 12px;
-    opacity: 0.75;
-    margin-top: 6px;
-    line-height: 1.25;
-  }
-
+  .hint { font-size: 12px; opacity: 0.75; margin-top: 6px; line-height: 1.25; }
   .btnrow { display:flex; gap:10px; flex-wrap: wrap; }
   .btn {
     border: 1px solid rgba(0,0,0,0.18);
@@ -96,7 +83,6 @@
     font-size: 14px;
   }
 
-  /* Admin button */
   #adminBtn {
     position: fixed;
     top: 10px;
@@ -116,7 +102,6 @@
   }
   #adminBtn.hidden { display: none; }
 
-  /* Simple exit overlay screen */
   #exitScreen {
     position: fixed;
     inset: 0;
@@ -149,7 +134,7 @@
   <div class="row">
     <label>Mode <span class="pill" id="modePill">normal</span></label>
     <div class="hint" style="margin:0">
-      Admin panel auto-hides. Restricted mode tries to keep people stuck on this page.
+      Adjust “Hide bottom” until the blue bar is gone, then scroll to confirm the Submit button is reachable.
     </div>
   </div>
 
@@ -210,6 +195,10 @@
 <script>
   const PAGE_URL = "https://www.howitzer.ink/postprocedure.html";
 
+  // Extra scroll room so bottom content (submit) can scroll above the clipped zone.
+  // If your submit button is still getting clipped, bump this up (e.g. 220).
+  const EXTRA_SCROLL_PX = 140;
+
   const frame = document.getElementById('formFrame');
   const controls = document.getElementById('controls');
   const modePill = document.getElementById('modePill');
@@ -263,7 +252,6 @@
     const shrink = baselineHeight - h;
     keyboardUp = shrink > 120;
 
-    // Reset baseline on meaningful non-keyboard resizes (rotation etc.)
     if (!keyboardUp && Math.abs(h - baselineHeight) > 80) {
       baselineHeight = h;
     }
@@ -275,7 +263,6 @@
   function setLocked(on) {
     locked = !!on;
     localStorage.setItem('historyLocked', locked ? 'true' : 'false');
-
     if (locked) {
       try { history.pushState({kiosk: true}, "", location.href); } catch (e) {}
     }
@@ -311,17 +298,18 @@
     const cutPx = keyboardUp ? parseInt(maskKeyboard.value, 10) : parseInt(maskNormal.value, 10);
     const n = parseInt(nudgePx.value, 10);
 
-    // IMPORTANT: clip the visible area of the iframe (kills fixed/sticky bottom bars)
+    // Clip the visible iframe viewport (kills fixed/sticky bottom bars)
     frame.style.clipPath = `inset(0px 0px ${cutPx}px 0px)`;
     frame.style.webkitClipPath = `inset(0px 0px ${cutPx}px 0px)`;
 
-    // Nudge without transform (transform can break iframe scrolling)
+    // Nudge without transform (keeps scrolling working)
     frame.style.top = `${n}px`;
 
-    // Keep full height so internal scrolling works
-    frame.style.height = '100%';
+    // Critical: give extra height so the page can scroll bottom content
+    // up ABOVE the clipped zone where it can be tapped.
+    frame.style.height = `calc(100% + ${cutPx + EXTRA_SCROLL_PX}px)`;
 
-    // Block touches in the clipped zone (optional but useful)
+    // Block taps in the clipped zone to prevent accidental clicks
     bottomBlocker.style.height = `${cutPx}px`;
 
     maskNormalVal.textContent = `${parseInt(maskNormal.value,10)}px`;
@@ -363,7 +351,7 @@
   adminBtn.addEventListener('click', () => showControlsFor(10000));
   showAdminBtnFor(3500);
 
-  // Secret fallback: tap top-right corner 5 times -> show admin button
+  // Secret fallback: tap top-right corner 5 times
   let cornerTaps = 0;
   let cornerTapTimer = null;
 
@@ -409,7 +397,6 @@
     emergencyTimer = null;
   }, {passive:true});
 
-  // ----- Restricted toggle + lock/unlock buttons -----
   restrictedToggle.addEventListener('change', () => setRestricted(restrictedToggle.checked));
 
   btnLock.addEventListener('click', () => setRestricted(true));
@@ -432,14 +419,12 @@
     showAdminBtnFor(6000);
   });
 
-  // Watch viewport changes
   window.addEventListener('resize', applyClipAndSave);
   if (window.visualViewport) {
     window.visualViewport.addEventListener('resize', applyClipAndSave);
     window.visualViewport.addEventListener('scroll', applyClipAndSave);
   }
 
-  // Initial apply
   applyClipAndSave();
   setRestricted(savedRestricted);
 </script>
