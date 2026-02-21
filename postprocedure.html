@@ -7,7 +7,8 @@
 
   <style>
     :root{
-      --cropBottomPx: 120px;   /* default crop to hide Jotform bottom branding */
+      /* Phone default: smaller crop than tablet so we don't hide actual form content */
+      --cropBottomPx: 90px;
       --bg:#0b0c10;
       --panel: rgba(20,22,27,.92);
       --line: rgba(255,255,255,.14);
@@ -24,35 +25,31 @@
       background: var(--bg);
       color: var(--text);
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      overflow: hidden; /* no page scrolling */
+      overflow: hidden; /* no outer-page scroll */
       touch-action: manipulation;
     }
 
-    /* Viewport crop wrapper */
+    /* Crop viewport */
     .viewport {
       position: fixed;
       inset: 0;
-      overflow: hidden; /* crop */
+      overflow: hidden;
       background: #000;
     }
 
+    /* On phones, allow iframe scrolling (form is long) */
     iframe {
       position: absolute;
       inset: 0;
       width: 100%;
       height: calc(100% + var(--cropBottomPx));
       border: 0;
-      transform: translateY(0);
-      overflow: hidden;
       background: #000;
+      overflow: auto;
+      -webkit-overflow-scrolling: touch;
     }
 
-    /* If we want to allow scrolling inside iframe on demand */
-    .allowScroll iframe {
-      pointer-events: auto;
-    }
-
-    /* Tiny hidden hot corner */
+    /* Hidden hot corner for admin */
     .hotcorner {
       position: fixed;
       top: 0;
@@ -85,6 +82,7 @@
       font-size: 14px;
       letter-spacing: .2px;
     }
+
     .row {
       display: flex;
       align-items: center;
@@ -102,6 +100,7 @@
       width: 100%;
       accent-color: var(--accent);
     }
+
     .btns {
       display: flex;
       gap: 8px;
@@ -129,15 +128,22 @@
       line-height: 1.35;
     }
 
-    /* Optional “locked” overlay to prevent client interaction with UI outside iframe */
-    .shield {
+    /* Small floating “top” button (hidden unless admin is visible) */
+    .fab {
       position: fixed;
-      inset: 0;
-      z-index: 9997;
+      bottom: 18px;
+      right: 14px;
+      z-index: 9996;
       display: none;
-      background: transparent;
+      border-radius: 999px;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      background: rgba(20,22,27,.85);
+      color: var(--text);
+      box-shadow: var(--shadow);
+      font-size: 13px;
     }
-    .locked .shield { display: block; }
+    .fab.show { display: inline-flex; }
   </style>
 </head>
 
@@ -146,17 +152,16 @@
     <iframe
       id="formFrame"
       src="https://form.jotform.com/howitzerpictou/postprocedure"
-      scrolling="no"
+      scrolling="yes"
       referrerpolicy="no-referrer-when-downgrade"
       allow="clipboard-read; clipboard-write"
     ></iframe>
   </div>
 
-  <!-- invisible admin trigger (tap 5x quickly) -->
+  <!-- tap 5x quickly to show admin -->
   <div class="hotcorner" id="hotcorner" aria-label="Admin"></div>
 
-  <!-- optional click shield when locked -->
-  <div class="shield" id="shield"></div>
+  <button class="fab" id="topBtn" type="button">Top</button>
 
   <div class="admin" id="adminPanel" role="dialog" aria-label="Admin controls">
     <h3>Admin Controls</h3>
@@ -164,29 +169,27 @@
     <div class="row" style="gap:12px;">
       <label for="cropRange" style="min-width:120px;">Hide bottom:</label>
       <div style="flex:1;">
-        <input id="cropRange" type="range" min="0" max="260" step="2" />
+        <input id="cropRange" type="range" min="0" max="220" step="2" />
         <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-top:4px;">
-          <span>0</span><span id="cropValue">120px</span><span>260</span>
+          <span>0</span><span id="cropValue">90px</span><span>220</span>
         </div>
       </div>
     </div>
 
     <div class="btns">
-      <button class="primary" id="reloadBtn">Reload form</button>
-      <button id="scrollToggleBtn">Enable scrolling</button>
-      <button id="lockToggleBtn">Lock mode: ON</button>
-      <button id="hideAdminBtn">Hide admin</button>
+      <button class="primary" id="reloadBtn" type="button">Reload (new client)</button>
+      <button id="hardReloadBtn" type="button">Hard reload</button>
+      <button id="hideAdminBtn" type="button">Hide admin</button>
     </div>
 
     <div class="hint">
-      Tip: Tap the <b>top-right corner 5 times</b> to show admin controls. Admin auto-hides after a few seconds.
+      Tap the <b>top-right corner 5 times</b> to open this panel. It auto-hides after a few seconds.
     </div>
   </div>
 
   <script>
-    // --- Config ---
-    const DEFAULT_CROP = 120;          // px
-    const ADMIN_AUTOHIDE_MS = 5000;    // 5s
+    const DEFAULT_CROP = 90;          // phone-friendly default
+    const ADMIN_AUTOHIDE_MS = 6000;   // a little longer on phone
     const TAP_COUNT_NEEDED = 5;
     const TAP_WINDOW_MS = 900;
 
@@ -195,41 +198,35 @@
     const cropRange = document.getElementById('cropRange');
     const cropValue = document.getElementById('cropValue');
     const reloadBtn = document.getElementById('reloadBtn');
-    const scrollToggleBtn = document.getElementById('scrollToggleBtn');
-    const lockToggleBtn = document.getElementById('lockToggleBtn');
+    const hardReloadBtn = document.getElementById('hardReloadBtn');
     const hideAdminBtn = document.getElementById('hideAdminBtn');
     const hotcorner = document.getElementById('hotcorner');
-    const vp = document.getElementById('vp');
+    const topBtn = document.getElementById('topBtn');
 
-    // Lock mode: prevents fiddling with accidental gestures. (Still can fill the form.)
-    let locked = true;
-
-    // Allow scrolling inside iframe if needed
-    let allowScroll = false;
-
-    // Load saved settings
-    const savedCrop = Number(localStorage.getItem('pp_cropBottomPx'));
+    // Load saved crop for this page (per device)
+    const savedCrop = Number(localStorage.getItem('pp2_cropBottomPx'));
     const cropPx = Number.isFinite(savedCrop) && savedCrop >= 0 ? savedCrop : DEFAULT_CROP;
 
-    document.documentElement.style.setProperty('--cropBottomPx', cropPx + 'px');
-    cropRange.value = cropPx;
-    cropValue.textContent = cropPx + 'px';
-
     function setCrop(px){
-      const v = Math.max(0, Math.min(260, px|0));
+      const v = Math.max(0, Math.min(220, px|0));
       document.documentElement.style.setProperty('--cropBottomPx', v + 'px');
       cropValue.textContent = v + 'px';
-      localStorage.setItem('pp_cropBottomPx', String(v));
+      localStorage.setItem('pp2_cropBottomPx', String(v));
     }
+
+    setCrop(cropPx);
+    cropRange.value = cropPx;
 
     cropRange.addEventListener('input', (e) => setCrop(Number(e.target.value)));
 
     function showAdmin(){
       admin.classList.add('show');
+      topBtn.classList.add('show');
       scheduleHide();
     }
     function hideAdmin(){
       admin.classList.remove('show');
+      topBtn.classList.remove('show');
     }
 
     let hideTimer = null;
@@ -238,7 +235,7 @@
       hideTimer = setTimeout(() => hideAdmin(), ADMIN_AUTOHIDE_MS);
     }
 
-    // Tap 5x in hot corner to reveal admin
+    // Tap 5x in hot corner
     let taps = 0;
     let tapTimer = null;
 
@@ -256,41 +253,28 @@
     hotcorner.addEventListener('click', registerTap);
     hotcorner.addEventListener('touchend', (e) => { e.preventDefault(); registerTap(); }, {passive:false});
 
+    // "Reload (new client)" - clean refresh
     reloadBtn.addEventListener('click', () => {
-      // reload iframe cleanly
-      frame.src = frame.src.split('#')[0];
+      frame.src = "https://form.jotform.com/howitzerpictou/postprocedure";
       scheduleHide();
     });
 
-    scrollToggleBtn.addEventListener('click', () => {
-      allowScroll = !allowScroll;
-      if (allowScroll){
-        vp.classList.add('allowScroll');
-        frame.setAttribute('scrolling', 'yes');
-        scrollToggleBtn.textContent = 'Disable scrolling';
-      } else {
-        vp.classList.remove('allowScroll');
-        frame.setAttribute('scrolling', 'no');
-        scrollToggleBtn.textContent = 'Enable scrolling';
-      }
+    // "Hard reload" - adds cache buster
+    hardReloadBtn.addEventListener('click', () => {
+      const bust = Date.now();
+      frame.src = "https://form.jotform.com/howitzerpictou/postprocedure?cb=" + bust;
       scheduleHide();
     });
-
-    function applyLock(){
-      document.body.classList.toggle('locked', locked);
-      lockToggleBtn.textContent = 'Lock mode: ' + (locked ? 'ON' : 'OFF');
-    }
-    lockToggleBtn.addEventListener('click', () => {
-      locked = !locked;
-      applyLock();
-      scheduleHide();
-    });
-    applyLock();
 
     hideAdminBtn.addEventListener('click', hideAdmin);
 
-    // Optional: prevent accidental zoom gestures messing up kiosk feel (clients can still pinch zoom if browser allows)
-    document.addEventListener('gesturestart', (e) => e.preventDefault?.(), {passive:false});
+    // Jump to top of the iframe document (best effort; cross-origin prevents real scroll control)
+    topBtn.addEventListener('click', () => {
+      // We can't directly scroll inside cross-origin iframe,
+      // but reloading to same src snaps to top.
+      frame.src = frame.src.split("#")[0];
+      scheduleHide();
+    });
   </script>
 </body>
 </html>
