@@ -15,6 +15,11 @@
     --muted: rgba(233,237,244,0.65);
     --shadow: rgba(0,0,0,0.35);
     --glow: rgba(200,220,255,0.20);
+
+    --shopUse: rgba(255,210,120,0.16);
+    --shopUseHover: rgba(255,210,120,0.24);
+    --shopUseStroke: rgba(255,210,120,0.28);
+
     --shopPanel: rgba(0,0,0,0.45);
     --shopPanelHover: rgba(0,0,0,0.62);
   }
@@ -52,6 +57,29 @@
     margin: 0 auto;
   }
 
+  /* top-left clock/date */
+  .hud{
+    position: fixed;
+    top: 10px;
+    left: 12px;
+    z-index: 5;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-size: 12px;
+    line-height: 1.25;
+    color: rgba(233,237,244,0.85);
+    background: rgba(0,0,0,0.25);
+    border: 1px solid rgba(255,255,255,0.10);
+    border-radius: 10px;
+    padding: 8px 10px;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    box-shadow: 0 10px 24px rgba(0,0,0,0.35);
+    text-align: left;
+    user-select: none;
+  }
+  .hud .time{ font-size: 14px; letter-spacing: 0.5px; }
+  .hud .date{ color: rgba(233,237,244,0.70); }
+
   /* logo (no link) */
   .logo{
     margin: 0 auto 18px;
@@ -86,7 +114,7 @@
     box-shadow: 0 8px 20px var(--shadow);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
-    transition: background 0.25s ease, box-shadow 0.25s ease, transform 0.12s ease;
+    transition: background 0.25s ease, box-shadow 0.25s ease, transform 0.12s ease, border-color 0.25s ease;
     cursor:pointer;
     font: inherit;
   }
@@ -104,30 +132,31 @@
     pointer-events:none;
   }
 
-  /* divider spacing */
+  /* spacing */
   .divider{ height: 18px; }
 
-  /* shop buttons */
-  a.shop{
-    background: var(--shopPanel);
-    border: 1px solid rgba(255,255,255,0.12);
+  /* "Shop Use" button: same size, different look */
+  button.shopUse{
+    background: var(--shopUse);
+    border-color: var(--shopUseStroke);
   }
-  a.shop:hover{
-    background: var(--shopPanelHover);
-    box-shadow: 0 10px 24px rgba(0,0,0,0.55);
+  button.shopUse:hover{
+    background: var(--shopUseHover);
+    box-shadow: 0 10px 24px var(--shadow), 0 0 16px rgba(255,210,120,0.22);
   }
 
   /* shop section hidden by default */
   #shopSection{ display:none; }
   #shopSection.revealed{ display:block; }
 
-  /* small helper text (optional) */
-  .small{
-    width:300px;
-    margin: 6px auto 0;
-    font-size:12px;
-    color: var(--muted);
-    text-align:center;
+  /* shop/private links */
+  a.shop, button.shop{
+    background: var(--shopPanel);
+    border: 1px solid rgba(255,255,255,0.12);
+  }
+  a.shop:hover, button.shop:hover{
+    background: var(--shopPanelHover);
+    box-shadow: 0 10px 24px rgba(0,0,0,0.55);
   }
 
   /* toast */
@@ -155,15 +184,19 @@
 <body>
 <div class="bg"></div>
 
+<div class="hud">
+  <div class="time" id="hudTime">--:--:--</div>
+  <div class="date" id="hudDate">----</div>
+</div>
+
 <div class="wrap">
 
   <div class="logo">
     <img src="assets/logo.png" alt="Howitzer Logo">
   </div>
 
-  <!-- CLIENT LINKS -->
+  <!-- CLIENT LINKS (add more here later) -->
   <ul id="clientLinks">
-    <li><a class="btn placeholder" href="#">Gallery (coming soon)</a></li>
     <li><a class="btn" href="aftercare.html">Aftercare</a></li>
     <li><a class="btn" href="tattooconsent.html">Consent</a></li>
     <li><a class="btn placeholder" href="#">Contact (coming soon)</a></li>
@@ -171,11 +204,10 @@
 
   <div class="divider"></div>
 
-  <!-- BUTTON TO UNLOCK SHOP TOOLS -->
+  <!-- UNLOCK BUTTON (same size, different style) -->
   <ul>
-    <li><button class="btn" id="unlockBtn" type="button">Shop</button></li>
+    <li><button class="btn shopUse" id="unlockBtn" type="button">Shop Use</button></li>
   </ul>
-  <div class="small" id="shopHint" style="display:none;">Shop tools unlocked for this session.</div>
 
   <!-- SHOP / PRIVATE LINKS -->
   <div id="shopSection">
@@ -192,17 +224,19 @@
 <div class="toast" id="toast"></div>
 
 <script>
-  // NOTE: This is NOT real security. It's just a simple hide/show gate.
-  // Anyone who knows how can bypass it. Good enough to keep clients out.
+  // IMPORTANT: This is not real security. It's just a simple hide/show gate.
+  // Anyone who knows what they're doing can bypass it.
 
   // Change this to whatever you want:
-  const SHOP_PASSWORD = "change-me-123";
+  const SHOP_PASSWORD = "zzz";
 
   const unlockBtn = document.getElementById('unlockBtn');
   const lockBtn = document.getElementById('lockBtn');
   const shopSection = document.getElementById('shopSection');
   const toast = document.getElementById('toast');
-  const shopHint = document.getElementById('shopHint');
+
+  const hudTime = document.getElementById('hudTime');
+  const hudDate = document.getElementById('hudDate');
 
   function showToast(msg){
     toast.textContent = msg;
@@ -214,11 +248,9 @@
   function setUnlocked(on){
     if(on){
       shopSection.classList.add('revealed');
-      shopHint.style.display = "block";
       sessionStorage.setItem("shopUnlocked", "1");
     } else {
       shopSection.classList.remove('revealed');
-      shopHint.style.display = "none";
       sessionStorage.removeItem("shopUnlocked");
     }
   }
@@ -230,12 +262,9 @@
 
   unlockBtn.addEventListener('click', () => {
     if(sessionStorage.getItem("shopUnlocked") === "1"){
-      // Already unlocked: just toggle visibility
-      setUnlocked(true);
-      showToast("Shop already unlocked");
+      showToast("Already unlocked");
       return;
     }
-
     const entered = prompt("Shop password:");
     if(entered === null) return;
 
@@ -243,7 +272,7 @@
       setUnlocked(true);
       showToast("Unlocked");
     } else {
-      showToast("Nope");
+      showToast("Wrong");
     }
   });
 
@@ -251,6 +280,29 @@
     setUnlocked(false);
     showToast("Hidden");
   });
+
+  // Clock + date
+  function pad(n){ return String(n).padStart(2,'0'); }
+
+  function updateHud(){
+    const now = new Date();
+
+    const hh = pad(now.getHours());
+    const mm = pad(now.getMinutes());
+    const ss = pad(now.getSeconds());
+    hudTime.textContent = `${hh}:${mm}:${ss}`;
+
+    const dateFmt = new Intl.DateTimeFormat(undefined, {
+      weekday: "short",
+      year: "numeric",
+      month: "short",
+      day: "2-digit"
+    });
+    hudDate.textContent = dateFmt.format(now);
+  }
+
+  updateHud();
+  setInterval(updateHud, 1000);
 </script>
 
 </body>
