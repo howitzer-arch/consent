@@ -15,25 +15,33 @@
     }
 
     h1 {
-      margin-bottom: 20px;
+      margin: 10px 0 20px;
     }
-<div style="text-align:center;">
-  <img src="assets/logo.png" alt="Howitzer Logo" style="max-width:220px;">
-</div>
+
+    .logo {
+      margin: 0 0 18px;
+    }
+
+    .logo img {
+      max-width: 220px;
+      height: auto;
+      display: inline-block;
+    }
+
     ul {
       list-style: none;
       padding: 0;
-      max-width: 400px;
-      margin: auto;
+      margin: 0 auto;
+      max-width: 520px;
     }
 
     li {
-      margin: 10px 0;
+      margin: 12px 0;
     }
 
     a {
-      display: block;
-      padding: 12px;
+      display: inline-block; /* makes buttons NOT stretch */
+      padding: 12px 18px;
       background: #222;
       color: #fff;
       text-decoration: none;
@@ -51,18 +59,21 @@
     }
   </style>
 </head>
+
 <body>
+
+  <div class="logo">
+    <img src="assets/logo.png" alt="Howitzer Logo">
+  </div>
 
   <h1>Pictou Hub</h1>
 
   <ul>
-    <!-- Your current pages -->
     <li><a href="STARTPAGE2026.html">Start Page</a></li>
     <li><a href="music-dashboard.html">Music Dashboard</a></li>
     <li><a href="tattooconsent.html">Tattoo Consent</a></li>
     <li><a href="aftercare.html">Aftercare</a></li>
 
-    <!-- Placeholders for future pages -->
     <li><a class="placeholder">Gallery (coming soon)</a></li>
     <li><a class="placeholder">Booking (coming soon)</a></li>
     <li><a class="placeholder">Flash Designs (coming soon)</a></li>
