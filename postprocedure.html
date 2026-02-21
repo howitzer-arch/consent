@@ -20,23 +20,37 @@
     background: #fff;
   }
 
+  /* IMPORTANT:
+     - No transform on iframe (breaks scroll on iOS sometimes)
+     - Use clip-path to hide bottom bar (even if it's position:fixed)
+  */
   iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+
     width: 100%;
+    height: 100%;
+
     border: 0;
     display: block;
-    transform-origin: top left;
+
+    transform: none !important;
+    -webkit-overflow-scrolling: touch;
   }
 
-  /* This is the kill-shot: cover any fixed/sticky bottom bar inside the iframe */
-  #bottomMask {
+  /* Touch-blocker for the clipped area (optional but helpful):
+     If the bar has click targets right at the bottom, this blocks taps there.
+  */
+  #bottomBlocker {
     position: fixed;
     left: 0;
     right: 0;
     bottom: 0;
-    height: 0px;         /* controlled by slider */
-    background: #fff;    /* match page background */
-    z-index: 45;         /* above iframe, below controls */
-    pointer-events: none;/* doesn't steal touches except it visually covers */
+    height: 0px;        /* controlled by slider */
+    background: transparent;
+    z-index: 80;        /* ABOVE iframe */
+    pointer-events: auto;
   }
 
   /* Admin controls panel */
@@ -47,7 +61,7 @@
     background: rgba(255,255,255,0.94);
     border-bottom: 1px solid rgba(0,0,0,0.12);
     backdrop-filter: blur(10px);
-    z-index: 50;
+    z-index: 90;
   }
   .controls.hidden { display: none; }
 
@@ -94,7 +108,7 @@
     background: rgba(0,0,0,0.15);
     color: #000;
     font-size: 20px;
-    z-index: 60;
+    z-index: 100;
     backdrop-filter: blur(6px);
     display: flex;
     align-items: center;
@@ -107,7 +121,7 @@
     position: fixed;
     inset: 0;
     background: #fff;
-    z-index: 100;
+    z-index: 200;
     display: none;
     padding: 16px;
   }
@@ -126,6 +140,7 @@
   .noselect { user-select: none; -webkit-user-select: none; }
 </style>
 </head>
+
 <body class="noselect">
 
 <button id="adminBtn" aria-label="Admin settings">⚙</button>
@@ -139,14 +154,14 @@
   </div>
 
   <div class="row">
-    <label for="maskNormal">Bottom mask (normal)</label>
-    <input id="maskNormal" type="range" min="0" max="220" step="2" />
+    <label for="maskNormal">Hide bottom (normal)</label>
+    <input id="maskNormal" type="range" min="0" max="260" step="2" />
     <div class="val" id="maskNormalVal"></div>
   </div>
 
   <div class="row">
-    <label for="maskKeyboard">Bottom mask (keyboard)</label>
-    <input id="maskKeyboard" type="range" min="0" max="320" step="2" />
+    <label for="maskKeyboard">Hide bottom (keyboard)</label>
+    <input id="maskKeyboard" type="range" min="0" max="380" step="2" />
     <div class="val" id="maskKeyboardVal"></div>
   </div>
 
@@ -184,7 +199,7 @@
   ></iframe>
 </div>
 
-<div id="bottomMask"></div>
+<div id="bottomBlocker" aria-hidden="true"></div>
 
 <div id="exitScreen">
   <h1>Admin exit</h1>
@@ -207,7 +222,7 @@
   const maskKeyboardVal = document.getElementById('maskKeyboardVal');
   const nudgeVal = document.getElementById('nudgeVal');
 
-  const bottomMask = document.getElementById('bottomMask');
+  const bottomBlocker = document.getElementById('bottomBlocker');
 
   const restrictedToggle = document.getElementById('restrictedToggle');
 
@@ -221,8 +236,8 @@
   const btnReturn = document.getElementById('btnReturn');
 
   // ----- Persistent settings -----
-  const savedMaskNormal = parseInt(localStorage.getItem('maskBottomNormalPx') || '72', 10);
-  const savedMaskKeyboard = parseInt(localStorage.getItem('maskBottomKeyboardPx') || '110', 10);
+  const savedMaskNormal = parseInt(localStorage.getItem('maskBottomNormalPx') || '90', 10);
+  const savedMaskKeyboard = parseInt(localStorage.getItem('maskBottomKeyboardPx') || '130', 10);
   const savedNudge = parseInt(localStorage.getItem('nudgeUpPx') || '0', 10);
   const savedRestricted = (localStorage.getItem('restrictedMode') || 'true') === 'true';
 
@@ -236,7 +251,9 @@
   let baselineHeight = null;
 
   function getViewportHeight() {
-    return (window.visualViewport && window.visualViewport.height) ? window.visualViewport.height : window.innerHeight;
+    return (window.visualViewport && window.visualViewport.height)
+      ? window.visualViewport.height
+      : window.innerHeight;
   }
 
   function updateKeyboardState() {
@@ -246,6 +263,7 @@
     const shrink = baselineHeight - h;
     keyboardUp = shrink > 120;
 
+    // Reset baseline on meaningful non-keyboard resizes (rotation etc.)
     if (!keyboardUp && Math.abs(h - baselineHeight) > 80) {
       baselineHeight = h;
     }
@@ -286,20 +304,25 @@
     setLocked(isOn);
   }
 
-  // ----- Apply mask + nudge + save -----
-  function applyMaskAndSave() {
+  // ----- Apply clip + nudge + save -----
+  function applyClipAndSave() {
     updateKeyboardState();
 
-    const maskPx = keyboardUp ? parseInt(maskKeyboard.value, 10) : parseInt(maskNormal.value, 10);
+    const cutPx = keyboardUp ? parseInt(maskKeyboard.value, 10) : parseInt(maskNormal.value, 10);
     const n = parseInt(nudgePx.value, 10);
 
-    // Cover the bottom (works even if the blue bar is position:fixed)
-    bottomMask.style.height = `${maskPx}px`;
+    // IMPORTANT: clip the visible area of the iframe (kills fixed/sticky bottom bars)
+    frame.style.clipPath = `inset(0px 0px ${cutPx}px 0px)`;
+    frame.style.webkitClipPath = `inset(0px 0px ${cutPx}px 0px)`;
 
-    // Make iframe tall enough that content can still scroll "behind" the masked area
-    // and apply optional nudge.
-    frame.style.height = `calc(100% + ${maskPx}px)`;
-    frame.style.transform = `translateY(${n}px)`;
+    // Nudge without transform (transform can break iframe scrolling)
+    frame.style.top = `${n}px`;
+
+    // Keep full height so internal scrolling works
+    frame.style.height = '100%';
+
+    // Block touches in the clipped zone (optional but useful)
+    bottomBlocker.style.height = `${cutPx}px`;
 
     maskNormalVal.textContent = `${parseInt(maskNormal.value,10)}px`;
     maskKeyboardVal.textContent = `${parseInt(maskKeyboard.value,10)}px`;
@@ -312,9 +335,9 @@
     localStorage.setItem('nudgeUpPx', n);
   }
 
-  maskNormal.addEventListener('input', applyMaskAndSave);
-  maskKeyboard.addEventListener('input', applyMaskAndSave);
-  nudgePx.addEventListener('input', applyMaskAndSave);
+  maskNormal.addEventListener('input', applyClipAndSave);
+  maskKeyboard.addEventListener('input', applyClipAndSave);
+  nudgePx.addEventListener('input', applyClipAndSave);
 
   // ----- Admin UI behavior -----
   let hideAdminTimer = null;
@@ -386,6 +409,7 @@
     emergencyTimer = null;
   }, {passive:true});
 
+  // ----- Restricted toggle + lock/unlock buttons -----
   restrictedToggle.addEventListener('change', () => setRestricted(restrictedToggle.checked));
 
   btnLock.addEventListener('click', () => setRestricted(true));
@@ -393,7 +417,7 @@
 
   btnReload.addEventListener('click', () => {
     frame.src = PAGE_URL + (PAGE_URL.includes('?') ? '&' : '?') + 'r=' + Date.now();
-    applyMaskAndSave();
+    applyClipAndSave();
   });
 
   btnExit.addEventListener('click', () => {
@@ -408,18 +432,17 @@
     showAdminBtnFor(6000);
   });
 
-  window.addEventListener('resize', applyMaskAndSave);
+  // Watch viewport changes
+  window.addEventListener('resize', applyClipAndSave);
   if (window.visualViewport) {
-    window.visualViewport.addEventListener('resize', applyMaskAndSave);
-    window.visualViewport.addEventListener('scroll', applyMaskAndSave);
+    window.visualViewport.addEventListener('resize', applyClipAndSave);
+    window.visualViewport.addEventListener('scroll', applyClipAndSave);
   }
 
-  applyMaskAndSave();
+  // Initial apply
+  applyClipAndSave();
   setRestricted(savedRestricted);
 </script>
 
-</body>
-</html>
-  </script>
 </body>
 </html>
