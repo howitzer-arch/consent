@@ -1,80 +1,264 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Howitzer</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<title>Howitzer</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background:#2A303B; /* new background */
-      color:#eee;
-      text-align:center;
-      padding:40px;
-      margin:0;
-    }
+<style>
+  :root{
+    --bg:#2A303B;
+    --panel: rgba(255,255,255,0.10);
+    --panelHover: rgba(255,255,255,0.16);
+    --stroke: rgba(255,255,255,0.10);
+    --text:#E9EDF4;
+    --muted: rgba(233,237,244,0.65);
+    --shadow: rgba(0,0,0,0.35);
+    --glow: rgba(200,220,255,0.20);
+    --shopPanel: rgba(0,0,0,0.45);
+    --shopPanelHover: rgba(0,0,0,0.62);
+  }
 
-    .logo {
-      margin-bottom:25px;
-    }
+  body{
+    margin:0;
+    font-family: Arial, sans-serif;
+    color:var(--text);
+    background: var(--bg);
+    text-align:center;
+    padding:40px 16px;
+    overflow-x:hidden;
+  }
 
-    .logo img {
-      max-width:220px;
-      height:auto;
-      cursor:pointer;
-    }
+  /* subtle animated vibe background */
+  .bg{
+    position:fixed;
+    inset:-20%;
+    z-index:-1;
+    background:
+      radial-gradient(circle at 20% 25%, rgba(120,160,255,0.18), transparent 55%),
+      radial-gradient(circle at 80% 30%, rgba(255,120,200,0.12), transparent 55%),
+      radial-gradient(circle at 40% 80%, rgba(120,255,220,0.10), transparent 55%),
+      linear-gradient(180deg, rgba(0,0,0,0.18), transparent 45%);
+    filter: blur(6px);
+    animation: drift 18s ease-in-out infinite alternate;
+  }
 
-    ul {
-      list-style:none;
-      padding:0;
-      margin:0 auto;
-      width:280px; /* controls button width */
-    }
+  @keyframes drift{
+    0%   { transform: translate3d(-1.5%, -1.0%, 0) scale(1.02); }
+    100% { transform: translate3d( 1.5%,  1.2%, 0) scale(1.04); }
+  }
 
-    li {
-      margin:12px 0;
-    }
+  .wrap{
+    max-width: 520px;
+    margin: 0 auto;
+  }
 
-    a {
-      display:block;
-      padding:12px;
-      background:#222;
-      color:#fff;
-      text-decoration:none;
-      border-radius:6px;
-      transition:0.2s;
-    }
+  /* logo */
+  .logo{
+    margin: 0 auto 22px;
+    width: fit-content;
+    user-select:none;
+  }
+  .logo a{
+    display:inline-block;
+    border-radius:16px;
+    padding:10px 12px;
+    transition: transform 0.15s ease, background 0.2s ease;
+  }
+  .logo a:active{
+    transform: scale(0.98);
+  }
+  .logo img{
+    max-width:220px;
+    height:auto;
+    display:block;
+  }
 
-    a:hover {
-      background:#444;
-    }
+  /* hint line */
+  .hint{
+    font-size: 13px;
+    color: var(--muted);
+    margin: 0 0 22px;
+    letter-spacing: 0.2px;
+  }
 
-    .placeholder {
-      opacity:0.5;
-      pointer-events:none;
-    }
-  </style>
+  /* lists */
+  ul{
+    list-style:none;
+    padding:0;
+    margin:0 auto;
+    width: 300px; /* button width control */
+  }
+  li{ margin: 12px 0; }
+
+  /* glass buttons */
+  a.btn{
+    display:block;
+    padding: 13px 14px;
+    border-radius: 10px;
+    text-decoration:none;
+    color: var(--text);
+    background: var(--panel);
+    border: 1px solid var(--stroke);
+    box-shadow: 0 8px 20px var(--shadow);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    transition: background 0.25s ease, box-shadow 0.25s ease, transform 0.12s ease;
+  }
+  a.btn:hover{
+    background: var(--panelHover);
+    box-shadow: 0 10px 24px var(--shadow), 0 0 14px var(--glow);
+  }
+  /* mobile tap feedback */
+  a.btn:active{
+    transform: scale(0.985);
+  }
+
+  /* placeholders */
+  .placeholder{
+    opacity:0.55;
+    pointer-events:none;
+  }
+
+  /* section title */
+  .sectionTitle{
+    margin: 22px auto 10px;
+    width:300px;
+    font-size: 12px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    text-align:left;
+  }
+
+  /* divider spacing */
+  .divider{ height: 18px; }
+
+  /* shop tools styling */
+  a.shop{
+    background: var(--shopPanel);
+    border: 1px solid rgba(255,255,255,0.12);
+  }
+  a.shop:hover{
+    background: var(--shopPanelHover);
+    box-shadow: 0 10px 24px rgba(0,0,0,0.55);
+  }
+
+  /* hidden by default */
+  #shopSection{
+    display:none;
+  }
+  #shopSection.revealed{
+    display:block;
+  }
+
+  /* toast */
+  .toast{
+    position:fixed;
+    left:50%;
+    bottom:18px;
+    transform:translateX(-50%);
+    background: rgba(0,0,0,0.55);
+    border:1px solid rgba(255,255,255,0.12);
+    padding:10px 12px;
+    border-radius:12px;
+    font-size:13px;
+    color: var(--text);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    display:none;
+    max-width: 90vw;
+  }
+  .toast.show{
+    display:block;
+  }
+</style>
 </head>
 
 <body>
+<div class="bg"></div>
 
-  <div class="logo">
-    <a href="index.html">
+<div class="wrap">
+
+  <!-- Logo is the secret trigger: tap it 7 times to reveal shop tools -->
+  <div class="logo" id="logoTap">
+    <a href="index.html" aria-label="Home">
       <img src="assets/logo.png" alt="Howitzer Logo">
     </a>
   </div>
 
-  <ul>
-    <li><a href="STARTPAGE2026.html">Start Page</a></li>
-    <li><a href="music-dashboard.html">Music Dashboard</a></li>
-    <li><a href="tattooconsent.html">Tattoo Consent</a></li>
-    <li><a href="aftercare.html">Aftercare</a></li>
+  <div class="hint" id="hintLine">howitzer.ink</div>
 
-    <li><a class="placeholder">Gallery (coming soon)</a></li>
-    <li><a class="placeholder">Booking (coming soon)</a></li>
-    <li><a class="placeholder">Flash Designs (coming soon)</a></li>
+  <!-- CLIENT FACING LINKS (add more here later) -->
+  <div class="sectionTitle">Client</div>
+  <ul id="clientLinks">
+    <li><a class="btn placeholder" href="#">Gallery (coming soon)</a></li>
+    <li><a class="btn" href="aftercare.html">Aftercare</a></li>
+    <li><a class="btn" href="tattooconsent.html">Consent</a></li>
+    <li><a class="btn placeholder" href="#">Contact (coming soon)</a></li>
   </ul>
+
+  <div class="divider"></div>
+
+  <!-- SHOP / PRIVATE LINKS (hidden until secret unlock) -->
+  <div id="shopSection">
+    <div class="sectionTitle">Shop</div>
+    <ul id="shopLinks">
+      <li><a class="btn shop" href="STARTPAGE2026.html">Start Page</a></li>
+      <li><a class="btn shop" href="music-dashboard.html">Music Dashboard</a></li>
+    </ul>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  // Secret unlock: tap logo 7 times within 6 seconds
+  const logoTap = document.getElementById('logoTap');
+  const shopSection = document.getElementById('shopSection');
+  const toast = document.getElementById('toast');
+
+  let taps = 0;
+  let timer = null;
+  const REQUIRED_TAPS = 7;
+  const WINDOW_MS = 6000;
+
+  function showToast(msg){
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(()=>toast.classList.remove('show'), 2200);
+  }
+
+  function resetTaps(){
+    taps = 0;
+    timer = null;
+  }
+
+  logoTap.addEventListener('click', (e) => {
+    // Prevent navigation to index.html from consuming the secret taps too aggressively
+    // (still allows it to be a home button)
+    taps += 1;
+
+    if (!timer){
+      timer = setTimeout(() => resetTaps(), WINDOW_MS);
+      showToast("…");
+    } else {
+      // light feedback without being obvious
+      if (taps === 3) showToast("keep going");
+      if (taps === 5) showToast("almost");
+    }
+
+    if (taps >= REQUIRED_TAPS){
+      shopSection.classList.toggle('revealed');
+      showToast(shopSection.classList.contains('revealed') ? "Shop tools unlocked" : "Shop tools hidden");
+      clearTimeout(timer);
+      resetTaps();
+    }
+  }, { passive:true });
+</script>
 
 </body>
 </html>
