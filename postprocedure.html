@@ -4,7 +4,6 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=yes" />
 <title>Post Procedure</title>
-
 <style>
   html, body {
     height: 100%;
@@ -21,32 +20,23 @@
     background: #fff;
   }
 
-  /* iframe: no transforms (keeps iOS scrolling happy) */
   iframe {
-    position: absolute;
-    top: 0;
-    left: 0;
-
     width: 100%;
     border: 0;
     display: block;
-
-    transform: none !important;
-    -webkit-overflow-scrolling: touch;
+    transform-origin: top left;
   }
 
-  /* BLACK BAR (visual only — DOES NOT BLOCK CLICKS) */
-  #bottomBar {
+  /* This is the kill-shot: cover any fixed/sticky bottom bar inside the iframe */
+  #bottomMask {
     position: fixed;
     left: 0;
     right: 0;
     bottom: 0;
-
-    height: 0px;            /* controlled by JS */
-    background: #000;
-
-    z-index: 80;            /* above iframe */
-    pointer-events: none;   /* don't block submit button */
+    height: 0px;         /* controlled by slider */
+    background: #fff;    /* match page background */
+    z-index: 45;         /* above iframe, below controls */
+    pointer-events: none;/* doesn't steal touches except it visually covers */
   }
 
   /* Admin controls panel */
@@ -57,7 +47,7 @@
     background: rgba(255,255,255,0.94);
     border-bottom: 1px solid rgba(0,0,0,0.12);
     backdrop-filter: blur(10px);
-    z-index: 90;
+    z-index: 50;
   }
   .controls.hidden { display: none; }
 
@@ -104,7 +94,7 @@
     background: rgba(0,0,0,0.15);
     color: #000;
     font-size: 20px;
-    z-index: 100;
+    z-index: 60;
     backdrop-filter: blur(6px);
     display: flex;
     align-items: center;
@@ -117,7 +107,7 @@
     position: fixed;
     inset: 0;
     background: #fff;
-    z-index: 200;
+    z-index: 100;
     display: none;
     padding: 16px;
   }
@@ -136,7 +126,6 @@
   .noselect { user-select: none; -webkit-user-select: none; }
 </style>
 </head>
-
 <body class="noselect">
 
 <button id="adminBtn" aria-label="Admin settings">⚙</button>
@@ -145,19 +134,19 @@
   <div class="row">
     <label>Mode <span class="pill" id="modePill">normal</span></label>
     <div class="hint" style="margin:0">
-      Set “Hide bottom” until the blue bar is gone, then scroll and confirm Submit is tappable.
+      Admin panel auto-hides. Restricted mode tries to keep people stuck on this page.
     </div>
   </div>
 
   <div class="row">
-    <label for="maskNormal">Hide bottom (normal)</label>
-    <input id="maskNormal" type="range" min="0" max="260" step="2" />
+    <label for="maskNormal">Bottom mask (normal)</label>
+    <input id="maskNormal" type="range" min="0" max="220" step="2" />
     <div class="val" id="maskNormalVal"></div>
   </div>
 
   <div class="row">
-    <label for="maskKeyboard">Hide bottom (keyboard)</label>
-    <input id="maskKeyboard" type="range" min="0" max="380" step="2" />
+    <label for="maskKeyboard">Bottom mask (keyboard)</label>
+    <input id="maskKeyboard" type="range" min="0" max="320" step="2" />
     <div class="val" id="maskKeyboardVal"></div>
   </div>
 
@@ -195,8 +184,7 @@
   ></iframe>
 </div>
 
-<!-- DATE REMOVED: bar remains -->
-<div id="bottomBar"></div>
+<div id="bottomMask"></div>
 
 <div id="exitScreen">
   <h1>Admin exit</h1>
@@ -206,9 +194,6 @@
 
 <script>
   const PAGE_URL = "https://www.howitzer.ink/postprocedure.html";
-
-  // Scroll runway so Submit can rise ABOVE the clipped zone
-  const EXTRA_SCROLL_PX = 280;
 
   const frame = document.getElementById('formFrame');
   const controls = document.getElementById('controls');
@@ -222,6 +207,8 @@
   const maskKeyboardVal = document.getElementById('maskKeyboardVal');
   const nudgeVal = document.getElementById('nudgeVal');
 
+  const bottomMask = document.getElementById('bottomMask');
+
   const restrictedToggle = document.getElementById('restrictedToggle');
 
   const adminBtn = document.getElementById('adminBtn');
@@ -233,11 +220,9 @@
   const exitScreen = document.getElementById('exitScreen');
   const btnReturn = document.getElementById('btnReturn');
 
-  const bottomBar = document.getElementById('bottomBar');
-
   // ----- Persistent settings -----
-  const savedMaskNormal = parseInt(localStorage.getItem('maskBottomNormalPx') || '90', 10);
-  const savedMaskKeyboard = parseInt(localStorage.getItem('maskBottomKeyboardPx') || '130', 10);
+  const savedMaskNormal = parseInt(localStorage.getItem('maskBottomNormalPx') || '72', 10);
+  const savedMaskKeyboard = parseInt(localStorage.getItem('maskBottomKeyboardPx') || '110', 10);
   const savedNudge = parseInt(localStorage.getItem('nudgeUpPx') || '0', 10);
   const savedRestricted = (localStorage.getItem('restrictedMode') || 'true') === 'true';
 
@@ -251,9 +236,7 @@
   let baselineHeight = null;
 
   function getViewportHeight() {
-    return (window.visualViewport && window.visualViewport.height)
-      ? window.visualViewport.height
-      : window.innerHeight;
+    return (window.visualViewport && window.visualViewport.height) ? window.visualViewport.height : window.innerHeight;
   }
 
   function updateKeyboardState() {
@@ -303,20 +286,20 @@
     setLocked(isOn);
   }
 
-  // ----- Apply clip + nudge + save -----
-  function applyClipAndSave() {
+  // ----- Apply mask + nudge + save -----
+  function applyMaskAndSave() {
     updateKeyboardState();
 
-    const cutPx = keyboardUp ? parseInt(maskKeyboard.value, 10) : parseInt(maskNormal.value, 10);
+    const maskPx = keyboardUp ? parseInt(maskKeyboard.value, 10) : parseInt(maskNormal.value, 10);
     const n = parseInt(nudgePx.value, 10);
 
-    frame.style.clipPath = `inset(0px 0px ${cutPx}px 0px)`;
-    frame.style.webkitClipPath = `inset(0px 0px ${cutPx}px 0px)`;
+    // Cover the bottom (works even if the blue bar is position:fixed)
+    bottomMask.style.height = `${maskPx}px`;
 
-    frame.style.top = `${n}px`;
-    frame.style.height = `calc(100% + ${cutPx + EXTRA_SCROLL_PX}px)`;
-
-    bottomBar.style.height = `${cutPx}px`;
+    // Make iframe tall enough that content can still scroll "behind" the masked area
+    // and apply optional nudge.
+    frame.style.height = `calc(100% + ${maskPx}px)`;
+    frame.style.transform = `translateY(${n}px)`;
 
     maskNormalVal.textContent = `${parseInt(maskNormal.value,10)}px`;
     maskKeyboardVal.textContent = `${parseInt(maskKeyboard.value,10)}px`;
@@ -329,9 +312,9 @@
     localStorage.setItem('nudgeUpPx', n);
   }
 
-  maskNormal.addEventListener('input', applyClipAndSave);
-  maskKeyboard.addEventListener('input', applyClipAndSave);
-  nudgePx.addEventListener('input', applyClipAndSave);
+  maskNormal.addEventListener('input', applyMaskAndSave);
+  maskKeyboard.addEventListener('input', applyMaskAndSave);
+  nudgePx.addEventListener('input', applyMaskAndSave);
 
   // ----- Admin UI behavior -----
   let hideAdminTimer = null;
@@ -357,7 +340,7 @@
   adminBtn.addEventListener('click', () => showControlsFor(10000));
   showAdminBtnFor(3500);
 
-  // Secret fallback: tap top-right corner 5 times
+  // Secret fallback: tap top-right corner 5 times -> show admin button
   let cornerTaps = 0;
   let cornerTapTimer = null;
 
@@ -403,7 +386,6 @@
     emergencyTimer = null;
   }, {passive:true});
 
-  // ----- Restricted toggle + lock/unlock buttons -----
   restrictedToggle.addEventListener('change', () => setRestricted(restrictedToggle.checked));
 
   btnLock.addEventListener('click', () => setRestricted(true));
@@ -411,7 +393,7 @@
 
   btnReload.addEventListener('click', () => {
     frame.src = PAGE_URL + (PAGE_URL.includes('?') ? '&' : '?') + 'r=' + Date.now();
-    applyClipAndSave();
+    applyMaskAndSave();
   });
 
   btnExit.addEventListener('click', () => {
@@ -426,15 +408,13 @@
     showAdminBtnFor(6000);
   });
 
-  // Watch viewport changes
-  window.addEventListener('resize', applyClipAndSave);
+  window.addEventListener('resize', applyMaskAndSave);
   if (window.visualViewport) {
-    window.visualViewport.addEventListener('resize', applyClipAndSave);
-    window.visualViewport.addEventListener('scroll', applyClipAndSave);
+    window.visualViewport.addEventListener('resize', applyMaskAndSave);
+    window.visualViewport.addEventListener('scroll', applyMaskAndSave);
   }
 
-  // Initial apply
-  applyClipAndSave();
+  applyMaskAndSave();
   setRestricted(savedRestricted);
 </script>
 
