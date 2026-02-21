@@ -3,8 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=yes" />
-<title>Post Procedure</title>
-
+<title>Post-Procedure Form</title>
 <style>
   html, body {
     height: 100%;
@@ -17,36 +16,15 @@
   .frame-window {
     position: fixed;
     inset: 0;
-    overflow: hidden;
+    overflow: hidden;   /* crops bottom */
     background: #fff;
   }
 
-  /* Keep iframe scroll stable (esp. iOS): no transforms */
   iframe {
-    position: absolute;
-    top: 0;
-    left: 0;
-
     width: 100%;
     border: 0;
     display: block;
-
-    transform: none !important;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  /* Black bar only (no text), doesn't block taps */
-  #bottomBar {
-    position: fixed;
-    left: 0;
-    right: 0;
-    bottom: 0;
-
-    height: 0px;          /* controlled by JS */
-    background: #000;
-
-    z-index: 80;          /* above iframe */
-    pointer-events: none; /* IMPORTANT: do not block submit */
+    transform-origin: top left;
   }
 
   /* Admin controls panel */
@@ -57,7 +35,7 @@
     background: rgba(255,255,255,0.94);
     border-bottom: 1px solid rgba(0,0,0,0.12);
     backdrop-filter: blur(10px);
-    z-index: 90;
+    z-index: 50;
   }
   .controls.hidden { display: none; }
 
@@ -104,7 +82,7 @@
     background: rgba(0,0,0,0.15);
     color: #000;
     font-size: 20px;
-    z-index: 100;
+    z-index: 60;
     backdrop-filter: blur(6px);
     display: flex;
     align-items: center;
@@ -112,12 +90,12 @@
   }
   #adminBtn.hidden { display: none; }
 
-  /* Exit overlay */
+  /* Simple exit overlay screen */
   #exitScreen {
     position: fixed;
     inset: 0;
     background: #fff;
-    z-index: 200;
+    z-index: 100;
     display: none;
     padding: 16px;
   }
@@ -133,10 +111,10 @@
     font-size: 16px;
   }
 
+  /* Optional: prevent text selection on outer UI */
   .noselect { user-select: none; -webkit-user-select: none; }
 </style>
 </head>
-
 <body class="noselect">
 
 <button id="adminBtn" aria-label="Admin settings">⚙</button>
@@ -145,25 +123,25 @@
   <div class="row">
     <label>Mode <span class="pill" id="modePill">normal</span></label>
     <div class="hint" style="margin:0">
-      Set “Hide bottom” until the blue bar is gone, then scroll and confirm Submit is tappable.
+      Admin panel auto-hides. Restricted mode tries to keep people stuck on this page.
     </div>
   </div>
 
   <div class="row">
-    <label for="maskNormal">Hide bottom (normal)</label>
-    <input id="maskNormal" type="range" min="0" max="260" step="2" />
-    <div class="val" id="maskNormalVal"></div>
+    <label for="hideNormal">Hide footer (normal)</label>
+    <input id="hideNormal" type="range" min="0" max="700" step="5" />
+    <div class="val" id="hideNormalVal"></div>
   </div>
 
   <div class="row">
-    <label for="maskKeyboard">Hide bottom (keyboard)</label>
-    <input id="maskKeyboard" type="range" min="0" max="380" step="2" />
-    <div class="val" id="maskKeyboardVal"></div>
+    <label for="hideKeyboard">Hide footer (keyboard)</label>
+    <input id="hideKeyboard" type="range" min="0" max="900" step="5" />
+    <div class="val" id="hideKeyboardVal"></div>
   </div>
 
   <div class="row">
     <label for="nudgePx">Nudge up/down</label>
-    <input id="nudgePx" type="range" min="-200" max="200" step="2" />
+    <input id="nudgePx" type="range" min="-160" max="160" step="2" />
     <div class="val" id="nudgeVal"></div>
   </div>
 
@@ -177,7 +155,7 @@
     <button class="btn" id="btnLock">Lock now</button>
     <button class="btn" id="btnUnlock">Unlock (allow back)</button>
     <button class="btn" id="btnExit">Exit screen</button>
-    <button class="btn" id="btnReload">Reload page</button>
+    <button class="btn" id="btnReload">Reload form</button>
   </div>
 
   <div class="hint">
@@ -188,38 +166,32 @@
 
 <div class="frame-window">
   <iframe id="formFrame"
-    src="https://www.howitzer.ink/postprocedure.html"
+    src="https://form.jotform.com/howitzerpictou/postprocedure"
     scrolling="yes"
     referrerpolicy="no-referrer-when-downgrade"
     allow="clipboard-read; clipboard-write"
   ></iframe>
 </div>
 
-<!-- Black bar only (date removed) -->
-<div id="bottomBar"></div>
-
 <div id="exitScreen">
   <h1>Admin exit</h1>
-  <p>Restricted mode is off here. You can close the browser/tab/app or reopen the page.</p>
-  <button class="bigbtn" id="btnReturn">Return</button>
+  <p>Restricted mode is off here. You can close the browser/tab/app or reopen the form.</p>
+  <button class="bigbtn" id="btnReturn">Return to post-procedure form</button>
 </div>
 
 <script>
-  const PAGE_URL = "https://www.howitzer.ink/postprocedure.html";
-
-  // Scroll runway so the Submit button can rise ABOVE the clipped zone
-  const EXTRA_SCROLL_PX = 280;
+  const FORM_URL = "https://form.jotform.com/howitzerpictou/postprocedure";
 
   const frame = document.getElementById('formFrame');
   const controls = document.getElementById('controls');
   const modePill = document.getElementById('modePill');
 
-  const maskNormal = document.getElementById('maskNormal');
-  const maskKeyboard = document.getElementById('maskKeyboard');
+  const hideNormal = document.getElementById('hideNormal');
+  const hideKeyboard = document.getElementById('hideKeyboard');
   const nudgePx = document.getElementById('nudgePx');
 
-  const maskNormalVal = document.getElementById('maskNormalVal');
-  const maskKeyboardVal = document.getElementById('maskKeyboardVal');
+  const hideNormalVal = document.getElementById('hideNormalVal');
+  const hideKeyboardVal = document.getElementById('hideKeyboardVal');
   const nudgeVal = document.getElementById('nudgeVal');
 
   const restrictedToggle = document.getElementById('restrictedToggle');
@@ -233,16 +205,14 @@
   const exitScreen = document.getElementById('exitScreen');
   const btnReturn = document.getElementById('btnReturn');
 
-  const bottomBar = document.getElementById('bottomBar');
-
   // ----- Persistent settings -----
-  const savedMaskNormal = parseInt(localStorage.getItem('maskBottomNormalPx') || '90', 10);
-  const savedMaskKeyboard = parseInt(localStorage.getItem('maskBottomKeyboardPx') || '130', 10);
+  const savedHideNormal = parseInt(localStorage.getItem('hideFooterNormalPx') || '220', 10);
+  const savedHideKeyboard = parseInt(localStorage.getItem('hideFooterKeyboardPx') || '380', 10);
   const savedNudge = parseInt(localStorage.getItem('nudgeUpPx') || '0', 10);
   const savedRestricted = (localStorage.getItem('restrictedMode') || 'true') === 'true';
 
-  maskNormal.value = savedMaskNormal;
-  maskKeyboard.value = savedMaskKeyboard;
+  hideNormal.value = savedHideNormal;
+  hideKeyboard.value = savedHideKeyboard;
   nudgePx.value = savedNudge;
   restrictedToggle.checked = savedRestricted;
 
@@ -251,9 +221,7 @@
   let baselineHeight = null;
 
   function getViewportHeight() {
-    return (window.visualViewport && window.visualViewport.height)
-      ? window.visualViewport.height
-      : window.innerHeight;
+    return (window.visualViewport && window.visualViewport.height) ? window.visualViewport.height : window.innerHeight;
   }
 
   function updateKeyboardState() {
@@ -263,6 +231,7 @@
     const shrink = baselineHeight - h;
     keyboardUp = shrink > 120;
 
+    // Reset baseline on meaningful non-keyboard resizes (rotation etc.)
     if (!keyboardUp && Math.abs(h - baselineHeight) > 80) {
       baselineHeight = h;
     }
@@ -287,6 +256,8 @@
   });
 
   function applySandbox(restrictedOn) {
+    // Restricted: block popups/new tabs and prevent the iframe from navigating the TOP page.
+    // Keep scripts + forms so Jotform still works.
     if (restrictedOn) {
       frame.setAttribute('sandbox', 'allow-forms allow-scripts allow-same-origin');
     } else {
@@ -300,43 +271,33 @@
     localStorage.setItem('restrictedMode', isOn ? 'true' : 'false');
 
     applySandbox(isOn);
-    setLocked(isOn);
+    setLocked(isOn); // restricted implies locked back button
   }
 
-  // ----- Apply clip + nudge + save -----
-  function applyClipAndSave() {
+  // ----- Apply crop + save -----
+  function applyCropAndSave() {
     updateKeyboardState();
 
-    const cutPx = keyboardUp ? parseInt(maskKeyboard.value, 10) : parseInt(maskNormal.value, 10);
+    const hidePx = keyboardUp ? parseInt(hideKeyboard.value, 10) : parseInt(hideNormal.value, 10);
     const n = parseInt(nudgePx.value, 10);
 
-    // Hide the bottom bar (even if fixed) by clipping the iframe viewport
-    frame.style.clipPath = `inset(0px 0px ${cutPx}px 0px)`;
-    frame.style.webkitClipPath = `inset(0px 0px ${cutPx}px 0px)`;
+    frame.style.height = `calc(100% + ${hidePx}px)`;
+    frame.style.transform = `translateY(${n}px)`;
 
-    // Nudge without transform
-    frame.style.top = `${n}px`;
-
-    // Extra height gives scroll runway so Submit can scroll above the clipped zone
-    frame.style.height = `calc(100% + ${cutPx + EXTRA_SCROLL_PX}px)`;
-
-    // Visual black bar matches cut height
-    bottomBar.style.height = `${cutPx}px`;
-
-    maskNormalVal.textContent = `${parseInt(maskNormal.value,10)}px`;
-    maskKeyboardVal.textContent = `${parseInt(maskKeyboard.value,10)}px`;
+    hideNormalVal.textContent = `${parseInt(hideNormal.value,10)}px`;
+    hideKeyboardVal.textContent = `${parseInt(hideKeyboard.value,10)}px`;
     nudgeVal.textContent = `${n}px`;
 
     modePill.textContent = keyboardUp ? 'keyboard' : 'normal';
 
-    localStorage.setItem('maskBottomNormalPx', parseInt(maskNormal.value,10));
-    localStorage.setItem('maskBottomKeyboardPx', parseInt(maskKeyboard.value,10));
+    localStorage.setItem('hideFooterNormalPx', parseInt(hideNormal.value,10));
+    localStorage.setItem('hideFooterKeyboardPx', parseInt(hideKeyboard.value,10));
     localStorage.setItem('nudgeUpPx', n);
   }
 
-  maskNormal.addEventListener('input', applyClipAndSave);
-  maskKeyboard.addEventListener('input', applyClipAndSave);
-  nudgePx.addEventListener('input', applyClipAndSave);
+  hideNormal.addEventListener('input', applyCropAndSave);
+  hideKeyboard.addEventListener('input', applyCropAndSave);
+  nudgePx.addEventListener('input', applyCropAndSave);
 
   // ----- Admin UI behavior -----
   let hideAdminTimer = null;
@@ -359,10 +320,10 @@
     }, ms);
   }
 
-  adminBtn.addEventListener('click', () => showControlsFor(10000));
-  showAdminBtnFor(3500);
+  adminBtn.addEventListener('click', () => showControlsFor(10000)); // 10 seconds visible
+  showAdminBtnFor(3500); // on load: show gear briefly
 
-  // Secret fallback: tap top-right corner 5 times
+  // Secret fallback: tap top-right corner 5 times -> show admin button for 6 seconds
   let cornerTaps = 0;
   let cornerTapTimer = null;
 
@@ -389,7 +350,7 @@
 
   document.addEventListener('mousedown', (e) => registerCornerTap(e.clientX, e.clientY));
 
-  // Emergency exit: 3-finger long-press (~1s)
+  // Emergency exit: 3-finger long-press (~1s) unlocks + shows exit screen
   let emergencyTimer = null;
 
   document.addEventListener('touchstart', (e) => {
@@ -408,14 +369,15 @@
     emergencyTimer = null;
   }, {passive:true});
 
+  // ----- Restricted toggle + lock/unlock buttons -----
   restrictedToggle.addEventListener('change', () => setRestricted(restrictedToggle.checked));
 
   btnLock.addEventListener('click', () => setRestricted(true));
   btnUnlock.addEventListener('click', () => setRestricted(false));
 
   btnReload.addEventListener('click', () => {
-    frame.src = PAGE_URL + (PAGE_URL.includes('?') ? '&' : '?') + 'r=' + Date.now();
-    applyClipAndSave();
+    frame.src = FORM_URL + (FORM_URL.includes('?') ? '&' : '?') + 'r=' + Date.now();
+    applyCropAndSave();
   });
 
   btnExit.addEventListener('click', () => {
@@ -430,14 +392,42 @@
     showAdminBtnFor(6000);
   });
 
-  window.addEventListener('resize', applyClipAndSave);
+  // Watch viewport changes
+  window.addEventListener('resize', applyCropAndSave);
   if (window.visualViewport) {
-    window.visualViewport.addEventListener('resize', applyClipAndSave);
-    window.visualViewport.addEventListener('scroll', applyClipAndSave);
+    window.visualViewport.addEventListener('resize', applyCropAndSave);
+    window.visualViewport.addEventListener('scroll', applyCropAndSave);
   }
 
-  applyClipAndSave();
+  // Initial apply
+  applyCropAndSave();
   setRestricted(savedRestricted);
+</script>
+
+<script>
+  // NOTE: This usually won't work because of cross-origin iframe access.
+  // Leaving it in because you had it, but don't be shocked when it does nothing.
+  let lastURL = "";
+
+  setInterval(() => {
+    const frame = document.querySelector("iframe");
+    if (!frame) return;
+
+    try {
+      const current = frame.contentWindow.location.href;
+
+      // Detect thank-you page after submit
+      if (current !== lastURL && current.includes("thankyou")) {
+        setTimeout(() => {
+          frame.src = frame.src.split("?")[0]; // reload clean form
+        }, 2000); // wait 2 seconds so client sees confirmation
+      }
+
+      lastURL = current;
+    } catch(e) {
+      // Cross-origin protection — ignore
+    }
+  }, 2000);
 </script>
 
 </body>
