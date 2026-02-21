@@ -1,279 +1,425 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Post-Procedure Form</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=yes" />
+<title>Post Procedure</title>
+<style>
+  html, body {
+    height: 100%;
+    margin: 0;
+    background: #fff;
+    overflow: hidden;
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  }
 
-  <style>
-    :root{
-      /* Phone default: smaller crop than tablet so we don't hide actual form content */
-      --cropBottomPx: 360px;
-      --bg:#0b0c10;
-      --panel: rgba(20,22,27,.92);
-      --line: rgba(255,255,255,.14);
-      --text: #f3f5f9;
-      --muted: rgba(243,245,249,.75);
-      --accent: #e9ff6a;
-      --shadow: 0 14px 40px rgba(0,0,0,.55);
-      --r: 16px;
-    }
+  .frame-window {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    background: #fff;
+  }
 
-    html, body {
-      height: 100%;
-      margin: 0;
-      background: var(--bg);
-      color: var(--text);
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      overflow: hidden; /* no outer-page scroll */
-      touch-action: manipulation;
-    }
+  iframe {
+    width: 100%;
+    border: 0;
+    display: block;
+    transform-origin: top left;
+  }
 
-    /* Crop viewport */
-    .viewport {
-      position: fixed;
-      inset: 0;
-      overflow: hidden;
-      background: #000;
-    }
+  /* This is the kill-shot: cover any fixed/sticky bottom bar inside the iframe */
+  #bottomMask {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 0px;         /* controlled by slider */
+    background: #fff;    /* match page background */
+    z-index: 45;         /* above iframe, below controls */
+    pointer-events: none;/* doesn't steal touches except it visually covers */
+  }
 
-    /* On phones, allow iframe scrolling (form is long) */
-    iframe {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: calc(100% + var(--cropBottomPx));
-      border: 0;
-      background: #000;
-      overflow: auto;
-      -webkit-overflow-scrolling: touch;
-    }
+  /* Admin controls panel */
+  .controls {
+    position: fixed;
+    left: 0; right: 0; top: 0;
+    padding: 10px 12px;
+    background: rgba(255,255,255,0.94);
+    border-bottom: 1px solid rgba(0,0,0,0.12);
+    backdrop-filter: blur(10px);
+    z-index: 50;
+  }
+  .controls.hidden { display: none; }
 
-    /* Hidden hot corner for admin */
-    .hotcorner {
-      position: fixed;
-      top: 0;
-      right: 0;
-      width: 70px;
-      height: 70px;
-      z-index: 9998;
-      background: transparent;
-    }
+  .row { display:flex; align-items:center; gap:10px; margin: 8px 0; }
+  .row label { width: 170px; font-size: 14px; }
+  .row input[type="range"] { flex: 1; }
+  .val { width: 80px; text-align:right; font-variant-numeric: tabular-nums; }
 
-    /* Admin panel */
-    .admin {
-      position: fixed;
-      top: 12px;
-      right: 12px;
-      z-index: 9999;
-      width: min(360px, calc(100vw - 24px));
-      background: var(--panel);
-      border: 1px solid var(--line);
-      border-radius: var(--r);
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(10px);
-      padding: 12px;
-      display: none;
-    }
-    .admin.show { display: block; }
+  .pill {
+    display:inline-block;
+    padding: 2px 8px;
+    border: 1px solid rgba(0,0,0,0.15);
+    border-radius: 999px;
+    font-size: 12px;
+    opacity: 0.85;
+    margin-left: 6px;
+  }
 
-    .admin h3 {
-      margin: 0 0 8px;
-      font-size: 14px;
-      letter-spacing: .2px;
-    }
+  .hint {
+    font-size: 12px;
+    opacity: 0.75;
+    margin-top: 6px;
+    line-height: 1.25;
+  }
 
-    .row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      margin: 10px 0;
-    }
-    .row label {
-      font-size: 13px;
-      color: var(--muted);
-      user-select: none;
-      white-space: nowrap;
-    }
-    input[type="range"] {
-      width: 100%;
-      accent-color: var(--accent);
-    }
+  .btnrow { display:flex; gap:10px; flex-wrap: wrap; }
+  .btn {
+    border: 1px solid rgba(0,0,0,0.18);
+    background: rgba(0,0,0,0.06);
+    padding: 8px 10px;
+    border-radius: 10px;
+    font-size: 14px;
+  }
 
-    .btns {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin-top: 10px;
-    }
-    button {
-      border: 1px solid var(--line);
-      background: rgba(255,255,255,.06);
-      color: var(--text);
-      padding: 10px 12px;
-      border-radius: 999px;
-      font-size: 13px;
-      cursor: pointer;
-      user-select: none;
-    }
-    button.primary {
-      border-color: rgba(233,255,106,.35);
-      background: rgba(233,255,106,.12);
-    }
-    .hint {
-      margin-top: 8px;
-      font-size: 12px;
-      color: var(--muted);
-      line-height: 1.35;
-    }
+  /* Admin button */
+  #adminBtn {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    width: 44px;
+    height: 44px;
+    border-radius: 999px;
+    border: none;
+    background: rgba(0,0,0,0.15);
+    color: #000;
+    font-size: 20px;
+    z-index: 60;
+    backdrop-filter: blur(6px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  #adminBtn.hidden { display: none; }
 
-    /* Small floating “top” button (hidden unless admin is visible) */
-    .fab {
-      position: fixed;
-      bottom: 18px;
-      right: 14px;
-      z-index: 9996;
-      display: none;
-      border-radius: 999px;
-      padding: 12px 14px;
-      border: 1px solid var(--line);
-      background: rgba(20,22,27,.85);
-      color: var(--text);
-      box-shadow: var(--shadow);
-      font-size: 13px;
-    }
-    .fab.show { display: inline-flex; }
-  </style>
+  /* Simple exit overlay screen */
+  #exitScreen {
+    position: fixed;
+    inset: 0;
+    background: #fff;
+    z-index: 100;
+    display: none;
+    padding: 16px;
+  }
+  #exitScreen.show { display: block; }
+  #exitScreen h1 { margin: 0 0 10px 0; font-size: 20px; }
+  #exitScreen p { margin: 0 0 14px 0; opacity: 0.8; }
+  #exitScreen .bigbtn {
+    display: inline-block;
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 1px solid rgba(0,0,0,0.18);
+    background: rgba(0,0,0,0.06);
+    font-size: 16px;
+  }
+
+  .noselect { user-select: none; -webkit-user-select: none; }
+</style>
 </head>
+<body class="noselect">
 
-<body>
-  <div class="viewport" id="vp">
-    <iframe 
-  src="https://www.howitzer.ink/postprocedure.html"
-  width="100%" 
-  height="900"
-  style="border:none; overflow:hidden;"
-  scrolling="no">
-</iframe>
+<button id="adminBtn" aria-label="Admin settings">⚙</button>
 
-  <!-- tap 5x quickly to show admin -->
-  <div class="hotcorner" id="hotcorner" aria-label="Admin"></div>
-
-  <button class="fab" id="topBtn" type="button">Top</button>
-
-  <div class="admin" id="adminPanel" role="dialog" aria-label="Admin controls">
-    <h3>Admin Controls</h3>
-
-    <div class="row" style="gap:12px;">
-      <label for="cropRange" style="min-width:120px;">Hide bottom:</label>
-      <div style="flex:1;">
-        <input id="cropRange" type="range" min="0" max="220" step="2" />
-        <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-top:4px;">
-          <span>0</span><span id="cropValue">90px</span><span>220</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="btns">
-      <button class="primary" id="reloadBtn" type="button">Reload (new client)</button>
-      <button id="hardReloadBtn" type="button">Hard reload</button>
-      <button id="hideAdminBtn" type="button">Hide admin</button>
-    </div>
-
-    <div class="hint">
-      Tap the <b>top-right corner 5 times</b> to open this panel. It auto-hides after a few seconds.
+<div class="controls hidden" id="controls">
+  <div class="row">
+    <label>Mode <span class="pill" id="modePill">normal</span></label>
+    <div class="hint" style="margin:0">
+      Admin panel auto-hides. Restricted mode tries to keep people stuck on this page.
     </div>
   </div>
 
-  <script>
-    const DEFAULT_CROP = 90;          // phone-friendly default
-    const ADMIN_AUTOHIDE_MS = 6000;   // a little longer on phone
-    const TAP_COUNT_NEEDED = 5;
-    const TAP_WINDOW_MS = 900;
+  <div class="row">
+    <label for="maskNormal">Bottom mask (normal)</label>
+    <input id="maskNormal" type="range" min="0" max="220" step="2" />
+    <div class="val" id="maskNormalVal"></div>
+  </div>
 
-    const frame = document.getElementById('formFrame');
-    const admin = document.getElementById('adminPanel');
-    const cropRange = document.getElementById('cropRange');
-    const cropValue = document.getElementById('cropValue');
-    const reloadBtn = document.getElementById('reloadBtn');
-    const hardReloadBtn = document.getElementById('hardReloadBtn');
-    const hideAdminBtn = document.getElementById('hideAdminBtn');
-    const hotcorner = document.getElementById('hotcorner');
-    const topBtn = document.getElementById('topBtn');
+  <div class="row">
+    <label for="maskKeyboard">Bottom mask (keyboard)</label>
+    <input id="maskKeyboard" type="range" min="0" max="320" step="2" />
+    <div class="val" id="maskKeyboardVal"></div>
+  </div>
 
-    // Load saved crop for this page (per device)
-    const savedCrop = Number(localStorage.getItem('pp2_cropBottomPx'));
-    const cropPx = Number.isFinite(savedCrop) && savedCrop >= 0 ? savedCrop : DEFAULT_CROP;
+  <div class="row">
+    <label for="nudgePx">Nudge up/down</label>
+    <input id="nudgePx" type="range" min="-200" max="200" step="2" />
+    <div class="val" id="nudgeVal"></div>
+  </div>
 
-    function setCrop(px){
-      const v = Math.max(0, Math.min(220, px|0));
-      document.documentElement.style.setProperty('--cropBottomPx', v + 'px');
-      cropValue.textContent = v + 'px';
-      localStorage.setItem('pp2_cropBottomPx', String(v));
+  <div class="row">
+    <label for="restrictedToggle">Restricted mode</label>
+    <input id="restrictedToggle" type="checkbox" />
+    <div class="hint" style="margin:0">Locks back button + tightens iframe sandbox.</div>
+  </div>
+
+  <div class="btnrow">
+    <button class="btn" id="btnLock">Lock now</button>
+    <button class="btn" id="btnUnlock">Unlock (allow back)</button>
+    <button class="btn" id="btnExit">Exit screen</button>
+    <button class="btn" id="btnReload">Reload page</button>
+  </div>
+
+  <div class="hint">
+    Secret admin recovery: tap top-right corner 5 times to show the gear.
+    Emergency exit: 3-finger long-press anywhere (~1s) to show exit screen.
+  </div>
+</div>
+
+<div class="frame-window">
+  <iframe id="formFrame"
+    src="https://www.howitzer.ink/postprocedure.html"
+    scrolling="yes"
+    referrerpolicy="no-referrer-when-downgrade"
+    allow="clipboard-read; clipboard-write"
+  ></iframe>
+</div>
+
+<div id="bottomMask"></div>
+
+<div id="exitScreen">
+  <h1>Admin exit</h1>
+  <p>Restricted mode is off here. You can close the browser/tab/app or reopen the page.</p>
+  <button class="bigbtn" id="btnReturn">Return</button>
+</div>
+
+<script>
+  const PAGE_URL = "https://www.howitzer.ink/postprocedure.html";
+
+  const frame = document.getElementById('formFrame');
+  const controls = document.getElementById('controls');
+  const modePill = document.getElementById('modePill');
+
+  const maskNormal = document.getElementById('maskNormal');
+  const maskKeyboard = document.getElementById('maskKeyboard');
+  const nudgePx = document.getElementById('nudgePx');
+
+  const maskNormalVal = document.getElementById('maskNormalVal');
+  const maskKeyboardVal = document.getElementById('maskKeyboardVal');
+  const nudgeVal = document.getElementById('nudgeVal');
+
+  const bottomMask = document.getElementById('bottomMask');
+
+  const restrictedToggle = document.getElementById('restrictedToggle');
+
+  const adminBtn = document.getElementById('adminBtn');
+  const btnLock = document.getElementById('btnLock');
+  const btnUnlock = document.getElementById('btnUnlock');
+  const btnExit = document.getElementById('btnExit');
+  const btnReload = document.getElementById('btnReload');
+
+  const exitScreen = document.getElementById('exitScreen');
+  const btnReturn = document.getElementById('btnReturn');
+
+  // ----- Persistent settings -----
+  const savedMaskNormal = parseInt(localStorage.getItem('maskBottomNormalPx') || '72', 10);
+  const savedMaskKeyboard = parseInt(localStorage.getItem('maskBottomKeyboardPx') || '110', 10);
+  const savedNudge = parseInt(localStorage.getItem('nudgeUpPx') || '0', 10);
+  const savedRestricted = (localStorage.getItem('restrictedMode') || 'true') === 'true';
+
+  maskNormal.value = savedMaskNormal;
+  maskKeyboard.value = savedMaskKeyboard;
+  nudgePx.value = savedNudge;
+  restrictedToggle.checked = savedRestricted;
+
+  // ----- Keyboard detection via viewport shrink -----
+  let keyboardUp = false;
+  let baselineHeight = null;
+
+  function getViewportHeight() {
+    return (window.visualViewport && window.visualViewport.height) ? window.visualViewport.height : window.innerHeight;
+  }
+
+  function updateKeyboardState() {
+    const h = getViewportHeight();
+    if (baselineHeight === null) baselineHeight = h;
+
+    const shrink = baselineHeight - h;
+    keyboardUp = shrink > 120;
+
+    if (!keyboardUp && Math.abs(h - baselineHeight) > 80) {
+      baselineHeight = h;
     }
+  }
 
-    setCrop(cropPx);
-    cropRange.value = cropPx;
+  // ----- Restricted mode (history lock + iframe sandbox) -----
+  let locked = false;
 
-    cropRange.addEventListener('input', (e) => setCrop(Number(e.target.value)));
+  function setLocked(on) {
+    locked = !!on;
+    localStorage.setItem('historyLocked', locked ? 'true' : 'false');
 
-    function showAdmin(){
-      admin.classList.add('show');
-      topBtn.classList.add('show');
-      scheduleHide();
+    if (locked) {
+      try { history.pushState({kiosk: true}, "", location.href); } catch (e) {}
     }
-    function hideAdmin(){
-      admin.classList.remove('show');
-      topBtn.classList.remove('show');
+  }
+
+  window.addEventListener('popstate', () => {
+    if (locked) {
+      try { history.pushState({kiosk: true}, "", location.href); } catch (err) {}
     }
+  });
 
-    let hideTimer = null;
-    function scheduleHide(){
-      if (hideTimer) clearTimeout(hideTimer);
-      hideTimer = setTimeout(() => hideAdmin(), ADMIN_AUTOHIDE_MS);
+  function applySandbox(restrictedOn) {
+    if (restrictedOn) {
+      frame.setAttribute('sandbox', 'allow-forms allow-scripts allow-same-origin');
+    } else {
+      frame.removeAttribute('sandbox');
     }
+  }
 
-    // Tap 5x in hot corner
-    let taps = 0;
-    let tapTimer = null;
+  function setRestricted(on) {
+    const isOn = !!on;
+    restrictedToggle.checked = isOn;
+    localStorage.setItem('restrictedMode', isOn ? 'true' : 'false');
 
-    function registerTap(){
-      taps++;
-      if (tapTimer) clearTimeout(tapTimer);
-      tapTimer = setTimeout(() => { taps = 0; }, TAP_WINDOW_MS);
+    applySandbox(isOn);
+    setLocked(isOn);
+  }
 
-      if (taps >= TAP_COUNT_NEEDED){
-        taps = 0;
-        showAdmin();
-      }
+  // ----- Apply mask + nudge + save -----
+  function applyMaskAndSave() {
+    updateKeyboardState();
+
+    const maskPx = keyboardUp ? parseInt(maskKeyboard.value, 10) : parseInt(maskNormal.value, 10);
+    const n = parseInt(nudgePx.value, 10);
+
+    // Cover the bottom (works even if the blue bar is position:fixed)
+    bottomMask.style.height = `${maskPx}px`;
+
+    // Make iframe tall enough that content can still scroll "behind" the masked area
+    // and apply optional nudge.
+    frame.style.height = `calc(100% + ${maskPx}px)`;
+    frame.style.transform = `translateY(${n}px)`;
+
+    maskNormalVal.textContent = `${parseInt(maskNormal.value,10)}px`;
+    maskKeyboardVal.textContent = `${parseInt(maskKeyboard.value,10)}px`;
+    nudgeVal.textContent = `${n}px`;
+
+    modePill.textContent = keyboardUp ? 'keyboard' : 'normal';
+
+    localStorage.setItem('maskBottomNormalPx', parseInt(maskNormal.value,10));
+    localStorage.setItem('maskBottomKeyboardPx', parseInt(maskKeyboard.value,10));
+    localStorage.setItem('nudgeUpPx', n);
+  }
+
+  maskNormal.addEventListener('input', applyMaskAndSave);
+  maskKeyboard.addEventListener('input', applyMaskAndSave);
+  nudgePx.addEventListener('input', applyMaskAndSave);
+
+  // ----- Admin UI behavior -----
+  let hideAdminTimer = null;
+  let hideControlsTimer = null;
+
+  function showAdminBtnFor(ms) {
+    adminBtn.classList.remove('hidden');
+    if (hideAdminTimer) clearTimeout(hideAdminTimer);
+    hideAdminTimer = setTimeout(() => adminBtn.classList.add('hidden'), ms);
+  }
+
+  function showControlsFor(ms) {
+    controls.classList.remove('hidden');
+    adminBtn.classList.add('hidden');
+
+    if (hideControlsTimer) clearTimeout(hideControlsTimer);
+    hideControlsTimer = setTimeout(() => {
+      controls.classList.add('hidden');
+      showAdminBtnFor(3000);
+    }, ms);
+  }
+
+  adminBtn.addEventListener('click', () => showControlsFor(10000));
+  showAdminBtnFor(3500);
+
+  // Secret fallback: tap top-right corner 5 times -> show admin button
+  let cornerTaps = 0;
+  let cornerTapTimer = null;
+
+  function registerCornerTap(x, y) {
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    const inTopRight = (x > w * 0.80) && (y < h * 0.25);
+    if (!inTopRight) return;
+
+    cornerTaps += 1;
+    if (cornerTapTimer) clearTimeout(cornerTapTimer);
+    cornerTapTimer = setTimeout(() => { cornerTaps = 0; }, 1200);
+
+    if (cornerTaps >= 5) {
+      cornerTaps = 0;
+      showAdminBtnFor(6000);
     }
+  }
 
-    hotcorner.addEventListener('click', registerTap);
-    hotcorner.addEventListener('touchend', (e) => { e.preventDefault(); registerTap(); }, {passive:false});
+  document.addEventListener('touchstart', (e) => {
+    if (!e.touches || !e.touches[0]) return;
+    registerCornerTap(e.touches[0].clientX, e.touches[0].clientY);
+  }, {passive:true});
 
-    // "Reload (new client)" - clean refresh
-    reloadBtn.addEventListener('click', () => {
-      frame.src = "https://form.jotform.com/howitzerpictou/postprocedure";
-      scheduleHide();
-    });
+  document.addEventListener('mousedown', (e) => registerCornerTap(e.clientX, e.clientY));
 
-    // "Hard reload" - adds cache buster
-    hardReloadBtn.addEventListener('click', () => {
-      const bust = Date.now();
-      frame.src = "https://form.jotform.com/howitzerpictou/postprocedure?cb=" + bust;
-      scheduleHide();
-    });
+  // Emergency exit: 3-finger long-press (~1s)
+  let emergencyTimer = null;
 
-    hideAdminBtn.addEventListener('click', hideAdmin);
+  document.addEventListener('touchstart', (e) => {
+    if (e.touches && e.touches.length >= 3) {
+      emergencyTimer = setTimeout(() => {
+        setRestricted(false);
+        controls.classList.add('hidden');
+        adminBtn.classList.add('hidden');
+        exitScreen.classList.add('show');
+      }, 900);
+    }
+  }, {passive:true});
 
-    // Jump to top of the iframe document (best effort; cross-origin prevents real scroll control)
-    topBtn.addEventListener('click', () => {
-      // We can't directly scroll inside cross-origin iframe,
-      // but reloading to same src snaps to top.
-      frame.src = frame.src.split("#")[0];
-      scheduleHide();
-    });
+  document.addEventListener('touchend', () => {
+    if (emergencyTimer) clearTimeout(emergencyTimer);
+    emergencyTimer = null;
+  }, {passive:true});
+
+  restrictedToggle.addEventListener('change', () => setRestricted(restrictedToggle.checked));
+
+  btnLock.addEventListener('click', () => setRestricted(true));
+  btnUnlock.addEventListener('click', () => setRestricted(false));
+
+  btnReload.addEventListener('click', () => {
+    frame.src = PAGE_URL + (PAGE_URL.includes('?') ? '&' : '?') + 'r=' + Date.now();
+    applyMaskAndSave();
+  });
+
+  btnExit.addEventListener('click', () => {
+    setRestricted(false);
+    controls.classList.add('hidden');
+    adminBtn.classList.add('hidden');
+    exitScreen.classList.add('show');
+  });
+
+  btnReturn.addEventListener('click', () => {
+    exitScreen.classList.remove('show');
+    showAdminBtnFor(6000);
+  });
+
+  window.addEventListener('resize', applyMaskAndSave);
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', applyMaskAndSave);
+    window.visualViewport.addEventListener('scroll', applyMaskAndSave);
+  }
+
+  applyMaskAndSave();
+  setRestricted(savedRestricted);
+</script>
+
+</body>
+</html>
   </script>
 </body>
 </html>
